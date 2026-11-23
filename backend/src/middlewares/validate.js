@@ -1,0 +1,20 @@
+'use strict';
+
+const ApiError = require('../utils/ApiError');
+
+const validate = (schema) => (req, _res, next) => {
+  const result = schema.safeParse({
+    body: req.body,
+    params: req.params,
+    query: req.query,
+  });
+
+  if (!result.success) {
+    return next(ApiError.badRequest('Payload inválido', result.error.flatten()));
+  }
+
+  req.validated = result.data;
+  return next();
+};
+
+module.exports = validate;

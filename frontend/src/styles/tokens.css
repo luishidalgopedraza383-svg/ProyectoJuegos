@@ -1,0 +1,24 @@
+/* Proyecto Juegos - tokens de identidad visual (diseño propio) */
+:root {
+  --gh-font-ui: 'Space Grotesk', system-ui, sans-serif;
+  --gh-font-display: 'Orbitron', 'Space Grotesk', sans-serif;
+  --gh-font-numeric: 'JetBrains Mono', ui-monospace, monospace;
+
+  --gh-bg: #0a0f1f;
+  --gh-surface: #121a30;
+  --gh-surface-2: #1a2440;
+  --gh-border: #293653;
+  --gh-text: #e8edff;
+  --gh-muted: #94a3c4;
+  --gh-primary: #7c5cff;
+  --gh-primary-strong: #6742f5;
+  --gh-accent: #22d3ee;
+  --gh-success: #34d399;
+  --gh-warning: #fbbf24;
+  --gh-danger: #f87171;
+
+  --gh-radius: 14px;
+  --gh-radius-sm: 8px;
+  --gh-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+  --gh-transition: 160ms ease;
+}
