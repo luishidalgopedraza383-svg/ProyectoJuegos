@@ -43,9 +43,10 @@ CREATE TABLE IF NOT EXISTS role_permissions (
 
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  auth_user_id UUID NOT NULL UNIQUE,
+  auth_user_id UUID UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
   display_name VARCHAR(120) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
   role_id UUID REFERENCES roles(id),
   is_active BOOLEAN NOT NULL DEFAULT true,
   last_login_at TIMESTAMPTZ,

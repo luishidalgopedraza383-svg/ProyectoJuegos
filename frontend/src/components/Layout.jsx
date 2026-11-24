@@ -31,8 +31,15 @@ export default function Layout() {
         </nav>
         <div className="spacer" />
         <div>
-          <p className="muted" style={{ fontSize: '0.8rem', marginBottom: 0 }}>{profile?.displayName || 'Usuario'}</p>
-          <button className="btn btn-ghost btn-sm" onClick={onLogout}>Cerrar sesión</button>
+          <p className="muted" style={{ fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+            {profile?.displayName || 'Usuario'}
+          </p>
+          {profile?.role?.name && (
+            <span className="badge" style={{ marginBottom: '0.5rem' }}>{profile.role.name}</span>
+          )}
+          <div style={{ marginTop: '0.5rem' }}>
+            <button className="btn btn-ghost btn-sm" onClick={onLogout}>Cerrar sesión</button>
+          </div>
         </div>
       </aside>
       <main className="main">

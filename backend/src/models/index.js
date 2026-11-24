@@ -29,8 +29,12 @@ const {
   Promotion, PromotionGame, SaleReturn, AuditLog,
 } = models;
 
-Role.belongsToMany(Permission, { through: RolePermission, foreignKey: 'roleId', otherKey: 'permissionId' });
-Permission.belongsToMany(Role, { through: RolePermission, foreignKey: 'permissionId', otherKey: 'roleId' });
+Role.belongsToMany(Permission, {
+  through: RolePermission, foreignKey: 'roleId', otherKey: 'permissionId', as: 'permissions',
+});
+Permission.belongsToMany(Role, {
+  through: RolePermission, foreignKey: 'permissionId', otherKey: 'roleId', as: 'roles',
+});
 
 User.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
 Role.hasMany(User, { foreignKey: 'roleId', as: 'users' });

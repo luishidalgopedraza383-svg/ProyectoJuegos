@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { useAuth } from '../context/AuthContext';
 
 export default function InventoryPage() {
+  const { can } = useAuth();
+  const canWrite = can('inventory.write');
+
   const [items, setItems] = useState([]);
   const [movements, setMovements] = useState([]);
   const [form, setForm] = useState({ itemId: '', movementType: 'entry', quantity: 1, reason: '' });
+  const [minDrafts, setMinDrafts] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -18,7 +23,7 @@ export default function InventoryPage() {
     setMovements(movementsData.items);
   }, []);
 
-  useEffect(() => { reload(); }, [reload]);
+  useEffect(() => { reload().catch(() => {}); }, [reload]);
   useAutoRefresh(reload, { intervalMs: 15000 });
 
   const submit = async (event) => {
@@ -40,6 +45,24 @@ export default function InventoryPage() {
     } catch (err) { setError(err.message); }
   };
 
+  const saveMin = async (item) => {
+    const value = Number(minDrafts[item.id] ?? item.minQuantity);
+    if (!Number.isInteger(value) || value < 0) {
+      setError('El stock mínimo debe ser un número entero mayor o igual a cero.');
+      return;
+    }
+    setError('');
+    setMessage('');
+    try {
+      await api(`/inventory/${item.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ minQuantity: value }),
+      });
+      setMessage(`Stock mínimo de ${item.game?.title} actualizado a ${value}.`);
+      await reload();
+    } catch (err) { setError(err.message); }
+  };
+
   return (
     <>
       <div className="topbar">
@@ -50,34 +73,41 @@ export default function InventoryPage() {
       {message && <div className="alert alert-success">{message}</div>}
       {error && <div className="alert alert-error">{error}</div>}
 
-      <section className="panel">
-        <h2>Registrar movimiento</h2>
-        <form className="form-grid" onSubmit={submit}>
-          <div>
-            <label>Videojuego</label>
-            <select value={form.itemId} onChange={(e) => setForm({ ...form, itemId: e.target.value })} required>
-              <option value="">Seleccione...</option>
-              {items.map((item) => <option key={item.id} value={item.id}>{item.game?.title}</option>)}
-            </select>
-          </div>
-          <div>
-            <label>Tipo</label>
-            <select value={form.movementType} onChange={(e) => setForm({ ...form, movementType: e.target.value })}>
-              <option value="entry">Entrada</option>
-              <option value="exit">Salida</option>
-              <option value="adjustment">Ajuste</option>
-            </select>
-          </div>
-          <div><label>Cantidad</label><input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required /></div>
-          <div><label>Motivo</label><input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} required /></div>
-          <button className="btn" type="submit">Guardar</button>
-        </form>
-      </section>
+      {canWrite && (
+        <section className="panel">
+          <h2>Registrar movimiento</h2>
+          <form className="form-grid" onSubmit={submit}>
+            <div>
+              <label>Videojuego</label>
+              <select value={form.itemId} onChange={(e) => setForm({ ...form, itemId: e.target.value })} required>
+                <option value="">Seleccione...</option>
+                {items.map((item) => <option key={item.id} value={item.id}>{item.game?.title}</option>)}
+              </select>
+            </div>
+            <div>
+              <label>Tipo</label>
+              <select value={form.movementType} onChange={(e) => setForm({ ...form, movementType: e.target.value })}>
+                <option value="entry">Entrada</option>
+                <option value="exit">Salida</option>
+                <option value="adjustment">Ajuste</option>
+              </select>
+            </div>
+            <div><label>Cantidad</label><input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required /></div>
+            <div><label>Motivo</label><input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} required /></div>
+            <button className="btn" type="submit">Guardar</button>
+          </form>
+        </section>
+      )}
 
       <section className="panel">
         <h2>Existencias</h2>
         <table>
-          <thead><tr><th>Juego</th><th>Tipo</th><th>Disponible</th><th>Mínimo</th><th>Estado</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Juego</th><th>Tipo</th><th>Disponible</th><th>Mínimo</th><th>Estado</th>
+              {canWrite && <th>Stock mínimo</th>}
+            </tr>
+          </thead>
           <tbody>
             {items.map((item) => {
               const low = item.quantity <= item.minQuantity;
@@ -88,9 +118,24 @@ export default function InventoryPage() {
                   <td className="num">{item.quantity}</td>
                   <td className="num">{item.minQuantity}</td>
                   <td><span className={`badge ${low ? 'warn' : 'ok'}`}>{low ? 'Stock bajo' : 'OK'}</span></td>
+                  {canWrite && (
+                    <td>
+                      <div className="row">
+                        <input
+                          type="number"
+                          min="0"
+                          style={{ width: '90px' }}
+                          value={minDrafts[item.id] ?? item.minQuantity}
+                          onChange={(e) => setMinDrafts({ ...minDrafts, [item.id]: e.target.value })}
+                        />
+                        <button className="btn btn-ghost btn-sm" onClick={() => saveMin(item)}>Guardar</button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}
+            {!items.length && <tr><td colSpan={canWrite ? 6 : 5} className="muted">No hay ítems de inventario.</td></tr>}
           </tbody>
         </table>
       </section>
@@ -109,6 +154,7 @@ export default function InventoryPage() {
                 <td>{movement.reason}</td>
               </tr>
             ))}
+            {!movements.length && <tr><td colSpan="5" className="muted">No hay movimientos registrados.</td></tr>}
           </tbody>
         </table>
       </section>

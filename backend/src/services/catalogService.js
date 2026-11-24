@@ -39,6 +39,15 @@ const getGame = async (id) => {
   return game;
 };
 
+const getMeta = async () => {
+  const [categories, genres, platforms] = await Promise.all([
+    db.Category.findAll({ attributes: ['id', 'name', 'slug'], order: [['name', 'ASC']] }),
+    db.Genre.findAll({ attributes: ['id', 'name'], order: [['name', 'ASC']] }),
+    db.Platform.findAll({ attributes: ['id', 'name', 'manufacturer'], order: [['name', 'ASC']] }),
+  ]);
+  return { categories, genres, platforms };
+};
+
 const createGame = async (payload, user) => {
   const game = await db.VideoGame.create(payload);
   await db.AuditLog.create({
@@ -65,4 +74,4 @@ const updateGame = async (id, payload, user) => {
   return getGame(id);
 };
 
-module.exports = { listGames, getGame, createGame, updateGame };
+module.exports = { listGames, getGame, getMeta, createGame, updateGame };

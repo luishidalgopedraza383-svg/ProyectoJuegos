@@ -10,6 +10,9 @@ const router = Router();
 
 router.use(authenticate);
 
+// Taxonomía para los formularios de catálogo (antes de /:id para no colisionar).
+router.get('/meta', requirePermission('catalog.read'), catalogController.meta);
+
 router.get('/', requirePermission('catalog.read'), catalogController.list);
 router.get('/:id', requirePermission('catalog.read'), validate(updateGameSchema.pick({ params: true })), catalogController.get);
 router.post('/', requirePermission('catalog.write'), validate(createGameSchema), catalogController.create);

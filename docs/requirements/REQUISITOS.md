@@ -4,7 +4,7 @@
 
 | ID | Requisito |
 | --- | --- |
-| RF-01 | Registrar y autenticar usuarios mediante Supabase Auth. |
+| RF-01 | Registrar y autenticar usuarios con login propio (JWT + contraseñas cifradas). Supabase Auth queda pendiente. |
 | RF-02 | Resolver perfil y permisos desde el JWT en el backend. |
 | RF-03 | Gestionar catálogo de videojuegos (título, SKU, precio, género, plataforma). |
 | RF-04 | Registrar entradas, salidas y ajustes de inventario. |
@@ -32,7 +32,7 @@
 | RNF-07 | Secretos únicamente en variables de entorno. |
 | RNF-08 | Health checks en API y web. |
 | RNF-09 | Soporte para Docker y Kubernetes. |
-| RNF-10 | RLS como capa adicional en Supabase. |
+| RNF-10 | RLS como capa adicional cuando se use Supabase (pendiente). |
 
 ## Reglas de dominio
 

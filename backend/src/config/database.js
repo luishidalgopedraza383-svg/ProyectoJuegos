@@ -1,7 +1,7 @@
 'use strict';
 
 const { Sequelize } = require('sequelize');
-const { databaseUrl, nodeEnv } = require('./env');
+const { databaseUrl, dbSsl } = require('./env');
 
 const sequelize = new Sequelize(databaseUrl, {
   dialect: 'postgres',
@@ -10,10 +10,9 @@ const sequelize = new Sequelize(databaseUrl, {
     underscored: true,
     freezeTableName: true,
   },
-  dialectOptions:
-    nodeEnv === 'production'
-      ? { ssl: { require: true, rejectUnauthorized: false } }
-      : {},
+  // SSL solo si se declara explicitamente (Supabase/ RDS). En Docker contra la
+  // base de datos local no aplica.
+  dialectOptions: dbSsl ? { ssl: { require: true, rejectUnauthorized: false } } : {},
   pool: {
     max: 10,
     min: 0,

@@ -14,5 +14,6 @@ module.exports = (sequelize) =>
     userAgent: { type: DataTypes.STRING(255) },
   }, {
     tableName: 'audit_logs',
+    updatedAt: false,
     indexes: [{ fields: ['action'] }, { fields: ['createdAt'] }],
   });

@@ -77,4 +77,26 @@ const registerMovement = async (payload, user) => {
   return result;
 };
 
-module.exports = { adjustStock, listItems, listLowStock, listMovements, registerMovement };
+// Edición de parámetros del stock (minimo y tipo de copia).
+const updateItem = async (itemId, payload, user) => {
+  const item = await db.InventoryItem.findByPk(itemId, {
+    include: [{ model: db.VideoGame, as: 'game', attributes: ['id', 'title', 'sku'] }],
+  });
+  if (!item) throw ApiError.notFound('Ítem de inventario no encontrado');
+
+  const changes = {};
+  if (payload.minQuantity !== undefined) changes.minQuantity = payload.minQuantity;
+  if (payload.itemType !== undefined) changes.itemType = payload.itemType;
+
+  await item.update(changes);
+  await db.AuditLog.create({
+    userId: user.id,
+    action: 'INVENTORY_ITEM_UPDATED',
+    entity: 'InventoryItem',
+    entityId: item.id,
+    payload: changes,
+  });
+  return item;
+};
+
+module.exports = { adjustStock, listItems, listLowStock, listMovements, registerMovement, updateItem };

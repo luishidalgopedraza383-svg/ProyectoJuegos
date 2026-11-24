@@ -2,8 +2,18 @@
 
 ## Ingresar
 
-1. Abre la aplicación y entra con tu correo y contraseña de Supabase.
-2. Si tu usuario no tiene perfil en Proyecto Juegos, un administrador debe registrarlo.
+1. Abre la aplicación en `http://localhost:5173` (te redirige a `/login`).
+2. Ingresa correo y contraseña, o usa una de las cuentas de demostración
+   (el botón correspondiente autocompleta el formulario):
+
+   | Rol | Correo | Contraseña |
+   | --- | --- | --- |
+   | Administrador | admin@proyectojuegos.local | Admin2026! |
+   | Gerente | gerente@proyectojuegos.local | Gerente2026! |
+   | Vendedor | vendedor@proyectojuegos.local | Vendedor2026! |
+   | Cajero | cajero@proyectojuegos.local | Cajero2026! |
+
+3. Si tu usuario no tiene perfil en Proyecto Juegos, un administrador debe registrarlo.
 
 ## Panel
 

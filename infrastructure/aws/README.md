@@ -7,7 +7,7 @@ Route 53 → CloudFront + WAF → ALB (HTTPS/TLS)
                          ├── ECS/EKS: proyecto-juegos-web
                          └── ECS/EKS: proyecto-juegos-api
                                   └── RDS/Supabase PostgreSQL
-Secrets Manager → DATABASE_URL, SUPABASE_JWT_SECRET
+Secrets Manager → DATABASE_URL, JWT_SECRET
 CloudWatch → logs y métricas de /health
 ```
 

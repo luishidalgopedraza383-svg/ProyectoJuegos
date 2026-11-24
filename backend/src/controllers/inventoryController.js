@@ -23,4 +23,9 @@ const registerMovement = asyncHandler(async (req, res) => {
   res.status(201).json(result);
 });
 
-module.exports = { list, lowStock, movements, registerMovement };
+const updateItem = asyncHandler(async (req, res) => {
+  const item = await inventoryService.updateItem(req.validated.params.itemId, req.validated.body, req.user);
+  res.json(item);
+});
+
+module.exports = { list, lowStock, movements, registerMovement, updateItem };

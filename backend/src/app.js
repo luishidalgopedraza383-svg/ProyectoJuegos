@@ -32,6 +32,13 @@ app.use(rateLimit({
 app.use(express.json({ limit: '1mb' }));
 app.use(requestId);
 
+// Nunca cachear respuestas del API (datos de venta/inventario en vivo).
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex');
+  next();
+});
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'proyecto-juegos-api', timestamp: new Date().toISOString() });
 });

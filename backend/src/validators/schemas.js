@@ -6,6 +6,15 @@ const uuid = z.string().uuid();
 const positiveInt = z.number().int().positive();
 const nonNegativeNumber = z.number().nonnegative();
 
+const loginSchema = z.object({
+  body: z.object({
+    email: z.string().trim().email().max(255),
+    password: z.string().min(6).max(200),
+  }),
+  params: z.object({}).default({}),
+  query: z.object({}).default({}),
+});
+
 const createGameSchema = z.object({
   body: z.object({
     title: z.string().min(2).max(180),
@@ -83,6 +92,15 @@ const movementSchema = z.object({
   query: z.object({}).default({}),
 });
 
+const updateItemSchema = z.object({
+  body: z.object({
+    minQuantity: z.number().int().min(0).max(999999).optional(),
+    itemType: z.enum(['digital_key', 'physical_copy']).optional(),
+  }).refine((value) => value.minQuantity !== undefined || value.itemType !== undefined, 'Debes enviar minQuantity o itemType'),
+  params: z.object({ itemId: uuid }),
+  query: z.object({}).default({}),
+});
+
 const customerSchema = z.object({
   body: z.object({
     email: z.string().email(),
@@ -95,6 +113,7 @@ const customerSchema = z.object({
 });
 
 module.exports = {
+  loginSchema,
   createGameSchema,
   updateGameSchema,
   createSaleSchema,
@@ -102,5 +121,6 @@ module.exports = {
   returnSchema,
   shiftSchema,
   movementSchema,
+  updateItemSchema,
   customerSchema,
 };
