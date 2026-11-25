@@ -340,6 +340,38 @@ que ya aparezca en una venta anterior (inactivo y sin stock, solo para historial
 
 Tipografías propias: `Orbitron` (títulos), `Space Grotesk` (interfaz), `JetBrains Mono` (cifras, con `tabular-nums`). Definidas en `frontend/src/styles/tokens.css`.
 
+## Despliegue en Vercel
+
+El repositorio está preparado para desplegar **frontend y API en un solo proyecto** de Vercel:
+
+- `vercel.json` instala las dependencias de `backend/` y `frontend/`, compila el frontend con `VITE_API_BASE_URL=/api/v1` y publica `frontend/dist`.
+- `api/index.js` es la función serverless: exporta la misma app Express de `backend/src/app.js`, sin `app.listen()`.
+- Los rewrites envían `/api/*`, `/uploads/*` y `/health` a la función; todo lo demás cae en `index.html` (rutas de React Router).
+
+### Pasos
+
+1. Importa el repositorio en Vercel como **un solo proyecto**, con *Root Directory* en la raíz. Si Vercel ofrece importar dos proyectos separados (`backend` e `Interfaz`), no lo hagas: manda `vercel.json`.
+2. Configura las *Environment Variables* en Project Settings (marcando Preview y Production):
+
+| Variable | Valor |
+| --- | --- |
+| `DATABASE_URL` | Connection string **Transaction pooler** de Supabase (puerto `6543`) |
+| `DB_SSL` | `true` |
+| `JWT_SECRET` | Secreto largo, distinto al de desarrollo |
+| `CORS_ORIGIN` | `https://TU-PROYECTO.vercel.app` |
+| `VITE_SHOW_DEMO_ACCOUNTS` | `true` solo si quieres los botones de autocompletado en la pantalla de login |
+| `UPLOAD_DIR` | opcional; por defecto `/tmp/uploads` |
+
+> `VITE_API_BASE_URL` **no** hace falta configurarla: `vercel.json` la fija a `/api/v1` durante el build, así que el navegador llama siempre al mismo dominio.
+
+3. Despliega y comprueba `https://TU-PROYECTO.vercel.app/health`, que debe responder `{"status":"ok"}`.
+
+### Limitaciones conocidas
+
+- Las portadas subidas desde el panel se guardan en `/tmp` de la función y **se pierden en cada despliegue**. Si necesitas persistencia, usa un almacenamiento externo (S3, Supabase Storage).
+- Supabase: usa el *pooler* (`6543`) con `DB_SSL=true`. La conexión directa (`5432`) no funciona desde Vercel.
+- El esquema y los datos demo ya están aplicados en Supabase (23 tablas y 18 juegos): el despliegue no ejecuta migraciones.
+
 ## Ramas del equipo
 
 Ver [RAMAS.md](./RAMAS.md). El repositorio se inicializa con exactamente tres ramas: `Fabio`, `Marco` y `Luis`.

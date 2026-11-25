@@ -1,0 +1,8 @@
+# Excluido del despliegue en Vercel (mismo criterio que .dockerignore).
+.git
+**/node_modules
+**/dist
+**/coverage
+**/*.log
+docs
+infrastructure
