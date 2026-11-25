@@ -5,6 +5,11 @@ const { z } = require('zod');
 const uuid = z.string().uuid();
 const positiveInt = z.number().int().positive();
 const nonNegativeNumber = z.number().nonnegative();
+// Precio en dólares, sin decimales: la tienda cotiza entre 10 y 60 USD.
+const priceUsd = z.number()
+  .int('El precio debe ser un número entero (sin decimales)')
+  .min(10, 'El precio mínimo es 10 USD')
+  .max(60, 'El precio máximo es 60 USD');
 
 const loginSchema = z.object({
   body: z.object({
@@ -23,17 +28,23 @@ const createGameSchema = z.object({
     categoryId: uuid.optional().nullable(),
     genreId: uuid.optional().nullable(),
     platformId: uuid.optional().nullable(),
-    price: nonNegativeNumber,
-    currency: z.string().length(3).optional(),
+    price: priceUsd,
+    // La tienda solo cotiza en dólares: no se acepta otra moneda.
+    currency: z.literal('USD').optional(),
     releaseDate: z.string().date().optional().nullable(),
     ageRating: z.string().max(10).optional().nullable(),
+    // Solo rutas internas: las imágenes se sirven desde este mismo origen (CSP).
+    imageUrl: z.string().max(500)
+      .regex(/^\/(uploads|covers)\/[A-Za-z0-9._/-]+$/, 'Ruta de portada inválida')
+      .optional().nullable(),
   }),
   params: z.object({}).default({}),
   query: z.object({}).default({}),
 });
 
 const updateGameSchema = z.object({
-  body: createGameSchema.shape.body.partial(),
+  // isActive también se edita desde el panel (activar/desactivar juegos).
+  body: createGameSchema.shape.body.partial().extend({ isActive: z.boolean().optional() }),
   params: z.object({ id: uuid }),
   query: z.object({}).default({}),
 });
@@ -50,6 +61,9 @@ const createSaleSchema = z.object({
       paymentMethodId: uuid,
       amount: nonNegativeNumber.refine((value) => value > 0, 'El monto debe ser mayor a cero'),
       reference: z.string().max(120).optional(),
+      // Obligatorios cuando el método es Tarjeta o Transferencia (saleService).
+      cardId: uuid.optional(),
+      bankAccountId: uuid.optional(),
     })).min(1),
     promotionCode: z.string().max(40).optional(),
   }),
@@ -112,6 +126,19 @@ const customerSchema = z.object({
   query: z.object({}).default({}),
 });
 
+const publicCatalogQuerySchema = z.object({
+  body: z.object({}).default({}),
+  params: z.object({}).default({}),
+  query: z.object({
+    search: z.string().trim().max(120).optional(),
+    platformId: uuid.optional(),
+    genreId: uuid.optional(),
+    categoryId: uuid.optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    offset: z.coerce.number().int().min(0).optional(),
+  }).default({}),
+});
+
 module.exports = {
   loginSchema,
   createGameSchema,
@@ -123,4 +150,5 @@ module.exports = {
   movementSchema,
   updateItemSchema,
   customerSchema,
+  publicCatalogQuerySchema,
 };

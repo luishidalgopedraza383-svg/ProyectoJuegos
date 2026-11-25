@@ -1,30 +1,56 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { useAuth } from '../context/AuthContext';
 import StatCard from '../components/StatCard';
+import { money } from '../utils/money';
 
 export default function DashboardPage() {
+  const { can, profile } = useAuth();
+  const canSeeReports = can('reports.read');
   const [summary, setSummary] = useState(null);
   const [top, setTop] = useState([]);
 
   const reload = useCallback(async () => {
+    if (!canSeeReports) return;
     const [summaryData, topData] = await Promise.all([
       api('/reports/summary'),
       api('/reports/top-games'),
     ]);
     setSummary(summaryData);
     setTop(topData.items);
-  }, []);
+  }, [canSeeReports]);
 
   useEffect(() => { reload(); }, [reload]);
   useAutoRefresh(reload, { intervalMs: 30000 });
 
-  const money = (value) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value || 0);
+  if (!canSeeReports) {
+    return (
+      <>
+        <div className="topbar">
+          <div>
+            <h1>Bienvenido, {profile?.displayName || 'usuario'}</h1>
+            <p className="muted">Tienda de claves digitales Xbox y PC</p>
+          </div>
+        </div>
+        <section className="panel">
+          <h2>Accesos rápidos</h2>
+          <div className="row">
+            {can('sales.write') && <Link className="btn" to="/ventas">Ir al punto de venta</Link>}
+            {can('catalog.read') && <Link className="btn btn-ghost" to="/catalogo">Ver catálogo</Link>}
+            {can('inventory.read') && <Link className="btn btn-ghost" to="/inventario">Ver inventario</Link>}
+            {can('catalog.write') && <Link className="btn btn-ghost" to="/admin/juegos">Administrar juegos</Link>}
+          </div>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>
       <div className="topbar">
-        <div><h1>Panel general</h1><p className="muted">Resumen operativo de Proyecto Juegos</p></div>
+        <div><h1>Panel general</h1><p className="muted">Resumen operativo de PlayVibe</p></div>
         <button className="btn btn-ghost btn-sm" onClick={reload}>Recargar</button>
       </div>
 

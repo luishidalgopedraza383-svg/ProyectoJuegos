@@ -11,4 +11,11 @@ module.exports = (sequelize) =>
     unitPrice: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     discount: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
     subtotal: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+    // Una clave por cada unidad vendida (formato XXXXX-XXXXX-XXXXX).
+    digitalKeys: {
+      type: DataTypes.ARRAY(DataTypes.STRING(17)),
+      allowNull: false,
+      defaultValue: [],
+      field: 'digital_keys',
+    },
   }, { tableName: 'sale_details' });

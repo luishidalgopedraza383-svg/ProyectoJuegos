@@ -3,6 +3,7 @@
 const { Op, Transaction } = require('sequelize');
 const db = require('../models');
 const ApiError = require('../utils/ApiError');
+const { signedQuantity } = require('../utils/stock');
 
 const adjustStock = async (
   { itemId, movementType, quantity, reason, referenceId, userId },
@@ -55,11 +56,12 @@ const listMovements = async (itemId) => db.InventoryMovement.findAll({
 });
 
 const registerMovement = async (payload, user) => {
+  const quantity = signedQuantity(payload.movementType, payload.quantity);
   const result = await db.sequelize.transaction(async (transaction) => {
     const movement = await adjustStock({
       itemId: payload.itemId,
       movementType: payload.movementType,
-      quantity: payload.quantity,
+      quantity,
       reason: payload.reason,
       userId: user.id,
     }, transaction);
@@ -69,7 +71,7 @@ const registerMovement = async (payload, user) => {
       action: 'INVENTORY_MOVEMENT',
       entity: 'InventoryItem',
       entityId: payload.itemId,
-      payload: { movementType: payload.movementType, quantity: payload.quantity },
+      payload: { movementType: payload.movementType, quantity },
     }, { transaction });
 
     return movement;
@@ -99,4 +101,6 @@ const updateItem = async (itemId, payload, user) => {
   return item;
 };
 
-module.exports = { adjustStock, listItems, listLowStock, listMovements, registerMovement, updateItem };
+module.exports = {
+  adjustStock, listItems, listLowStock, listMovements, registerMovement, updateItem,
+};

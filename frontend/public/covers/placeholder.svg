@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Portada de videojuego PlayVibe">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17241f"/>
+      <stop offset="1" stop-color="#0b1310"/>
+    </linearGradient>
+    <linearGradient id="vibe" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a8d5bd"/>
+      <stop offset="1" stop-color="#5fa77d"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <circle cx="520" cy="70" r="150" fill="#5fa77d" opacity="0.12"/>
+  <circle cx="90" cy="320" r="180" fill="#d3e8d9" opacity="0.06"/>
+  <g transform="translate(320 172)" fill="none" stroke="url(#vibe)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="-120" y="-45" width="240" height="90" rx="45"/>
+    <path d="M-70 -10v20M-80 0h20M60 -18a10 10 0 1 0 0.1 0M90 12a10 10 0 1 0 0.1 0"/>
+  </g>
+  <text x="320" y="305" text-anchor="middle" fill="#a8d5bd" font-family="Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="6">PLAYVIBE</text>
+</svg>

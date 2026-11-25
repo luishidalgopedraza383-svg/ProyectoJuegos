@@ -31,11 +31,17 @@ npm run seed
 
 La migración inicial ejecuta `database/schema.sql`. El seeder crea:
 
-- Roles `admin`, `gerente` y `cajero` con sus permisos.
-- 4 cuentas: 1 administradora y 3 usuarios (ver README y manual de usuario).
-- Plataformas PlayStation 5, Xbox Series X|S, Nintendo Switch y PC con
-  14 videojuegos y su inventario.
-- Métodos de pago: Efectivo, Tarjeta, Transferencia.
+- Roles `admin`, `gerente`, `cajero` y `comprador` con sus permisos.
+- 6 cuentas: 4 de operación y 2 compradores (ver README y manual de usuario).
+- Plataformas Xbox Series X|S y PC con 6 videojuegos y su inventario.
+  PlayStation y Nintendo se eliminaron porque dejaron de entregar claves a
+  tiendas virtuales externas (migración `remove-closed-platforms`).
+- Métodos de pago: **Tarjeta**, **Transferencia** y **Efectivo** (migración
+  `multi-payment-methods`). Las dos primeras descuentan saldo; Efectivo solo
+  deja constancia en el turno.
+- Una **tarjeta ficticia BCP** y una **cuenta bancaria BCP** por comprador
+  (500 USD iniciales cada una) en `payment_cards` y `bank_accounts`. El personal
+  no tiene cuenta propia: selecciona la del comprador que atiende.
 
 El seeder se salta si la base ya está poblada (no borra ventas al reiniciar).
 

@@ -1,9 +1,10 @@
 'use strict';
 
-const { Transaction } = require('sequelize');
+const { Transaction, Op } = require('sequelize');
 const db = require('../models');
 const ApiError = require('../utils/ApiError');
 const { toNumber, roundMoney } = require('../utils/money');
+const { generateDigitalKey } = require('../utils/digitalKey');
 const inventoryService = require('./inventoryService');
 
 const saleIncludes = [
@@ -19,8 +20,30 @@ const generateSaleCode = () => {
   return `GH-${stamp}-${random}`;
 };
 
-const getSale = async (id) => {
-  const sale = await db.Sale.findByPk(id, { include: saleIncludes });
+// Una clave distinta por cada unidad vendida, canjeable en la plataforma.
+// Se valida contra las claves ya entregadas para no repetir ninguna.
+const generateDigitalKeys = async (quantity, transaction) => {
+  const keys = [];
+  const seen = new Set();
+  while (keys.length < quantity) {
+    const key = generateDigitalKey();
+    if (seen.has(key)) continue;
+    const existing = await db.SaleDetail.count({
+      where: { digitalKeys: { [Op.overlap]: [key] } },
+      transaction,
+    });
+    if (existing) continue;
+    seen.add(key);
+    keys.push(key);
+  }
+  return keys;
+};
+
+const getSale = async (id, user = null) => {
+  const where = { id };
+  // Sin sales.readAll (rol comprador) solo se consultan las ventas propias.
+  if (user && !user.permissions.includes('sales.readAll')) where.sellerId = user.id;
+  const sale = await db.Sale.findOne({ where, include: saleIncludes });
   if (!sale) throw ApiError.notFound('Venta no encontrada');
   return sale;
 };
@@ -90,6 +113,7 @@ const createSale = async (payload, user) => {
         unitPrice: game.price,
         discount,
         subtotal: lineTotal,
+        digitalKeys: await generateDigitalKeys(requested.quantity, transaction),
       });
     }
 
@@ -107,6 +131,80 @@ const createSale = async (payload, user) => {
       throw ApiError.badRequest('Uno o más métodos de pago no son válidos');
     }
 
+    // Tarjeta y Transferencia descuentan de una cuenta ficticia dentro de la
+    // misma transacción de la venta; Efectivo solo deja constancia en caja.
+    const paymentRows = [];
+    for (const payment of payload.payments) {
+      const method = methods.find((item) => item.id === payment.paymentMethodId);
+      const { cardId, bankAccountId, ...row } = payment;
+      const amount = Number(payment.amount);
+      const isStaff = user.role?.name !== 'comprador';
+      row.reference = payment.reference || null;
+
+      if (method.code === 'CARD') {
+        if (!cardId) throw ApiError.badRequest('Para pagar con Tarjeta debes indicar tu tarjeta');
+        // Se bloquea solo la fila de la cuenta: PostgreSQL no permite
+        // FOR UPDATE sobre el lado opcional de un LEFT JOIN (user/role).
+        const card = await db.PaymentCard.findByPk(cardId, {
+          transaction,
+          lock: Transaction.LOCK.UPDATE,
+        });
+        if (!card || !card.isActive) {
+          throw ApiError.forbidden('La tarjeta indicada no existe o no está activa');
+        }
+        const owner = await db.User.findByPk(card.userId, {
+          transaction,
+          include: [{ model: db.Role, as: 'role', attributes: ['name'] }],
+        });
+        // Cada comprador paga con su propia cuenta; el personal del POS cobra
+        // con la cuenta del comprador que esté atendiendo.
+        const isOwnCard = card.userId === user.id;
+        const isBuyerCard = owner?.role?.name === 'comprador';
+        if (!isOwnCard && !(isStaff && isBuyerCard)) {
+          throw ApiError.forbidden('La tarjeta indicada no existe o no es de un comprador');
+        }
+        if (Number(card.balance) < amount) {
+          throw ApiError.badRequest(
+            `Saldo insuficiente en tu tarjeta ${card.brand} ****${card.cardNumber.slice(-4)}. `
+            + `Disponible: ${Number(card.balance)}; requerido: ${amount}`,
+          );
+        }
+        await card.decrement('balance', { by: amount, transaction });
+        row.reference = `${card.brand} ****${card.cardNumber.slice(-4)}`;
+      } else if (method.code === 'TRANSFER') {
+        if (!bankAccountId) throw ApiError.badRequest('Para pagar con Transferencia debes indicar la cuenta bancaria');
+        const account = await db.BankAccount.findByPk(bankAccountId, {
+          transaction,
+          lock: Transaction.LOCK.UPDATE,
+        });
+        if (!account || !account.isActive) {
+          throw ApiError.forbidden('La cuenta bancaria indicada no existe o no está activa');
+        }
+        const owner = await db.User.findByPk(account.userId, {
+          transaction,
+          include: [{ model: db.Role, as: 'role', attributes: ['name'] }],
+        });
+        const isOwnAccount = account.userId === user.id;
+        const isBuyerAccount = owner?.role?.name === 'comprador';
+        if (!isOwnAccount && !(isStaff && isBuyerAccount)) {
+          throw ApiError.forbidden('La cuenta indicada no existe o no es de un comprador');
+        }
+        if (Number(account.balance) < amount) {
+          throw ApiError.badRequest(
+            `Saldo insuficiente en la cuenta ${account.bank} ****${account.accountNumber.slice(-4)}. `
+            + `Disponible: ${Number(account.balance)}; requerido: ${amount}`,
+          );
+        }
+        await account.decrement('balance', { by: amount, transaction });
+        // Operación ficticia: deja una referencia distinta en cada venta.
+        row.reference = `${account.bank} ****${account.accountNumber.slice(-4)} · OP-${generateSaleCode().slice(3)}`;
+      } else if (method.code === 'CASH') {
+        row.reference = payment.reference || 'Efectivo en caja';
+      }
+
+      paymentRows.push(row);
+    }
+
     const sale = await db.Sale.create({
       code: generateSaleCode(),
       cashShiftId: shift.id,
@@ -118,7 +216,7 @@ const createSale = async (payload, user) => {
     }, { transaction });
 
     await db.SaleDetail.bulkCreate(details.map((detail) => ({ ...detail, saleId: sale.id })), { transaction });
-    await db.Payment.bulkCreate(payload.payments.map((payment) => ({ ...payment, saleId: sale.id })), { transaction });
+    await db.Payment.bulkCreate(paymentRows.map((payment) => ({ ...payment, saleId: sale.id })), { transaction });
 
     for (const requested of payload.items) {
       const game = games.find((item) => item.id === requested.videoGameId);
@@ -152,25 +250,30 @@ const createSale = async (payload, user) => {
       action: 'SALE_CREATED',
       entity: 'Sale',
       entityId: sale.id,
-      payload: { code: sale.code, total: sale.total },
+      payload: {
+        code: sale.code,
+        total: sale.total,
+        keysGenerated: details.reduce((sum, detail) => sum + detail.digitalKeys.length, 0),
+      },
     }, { transaction });
 
     return sale.id;
   });
-  return getSale(saleId);
+  return getSale(saleId, user);
 };
 
 const cancelSale = async (id, reason, user) => {
   await db.sequelize.transaction(async (transaction) => {
+    // Igual que con la tarjeta: se bloquea solo la venta, nunca un LEFT JOIN.
     const sale = await db.Sale.findByPk(id, {
-      include: [{ model: db.SaleDetail, as: 'details' }],
       transaction,
       lock: Transaction.LOCK.UPDATE,
     });
     if (!sale) throw ApiError.notFound('Venta no encontrada');
     if (sale.status !== 'completed') throw ApiError.conflict('La venta no está activa');
+    const details = await db.SaleDetail.findAll({ where: { saleId: sale.id }, transaction });
 
-    for (const detail of sale.details) {
+    for (const detail of details) {
       const item = await db.InventoryItem.findOne({
         where: { videoGameId: detail.videoGameId },
         transaction,
@@ -285,10 +388,14 @@ const getMyShift = async (user) => db.CashShift.findOne({
   include: [{ model: db.Sale, as: 'sales', attributes: ['id', 'code', 'total', 'status'] }],
 });
 
-const listSales = async (query = {}) => {
+const listSales = async (query = {}, user = null) => {
   const limit = Math.min(Number(query.limit) || 50, 100);
   const offset = Math.max(Number(query.offset) || 0, 0);
+  const where = user && !user.permissions.includes('sales.readAll')
+    ? { sellerId: user.id }
+    : {};
   const { rows, count } = await db.Sale.findAndCountAll({
+    where,
     include: saleIncludes,
     order: [['createdAt', 'DESC']],
     limit,

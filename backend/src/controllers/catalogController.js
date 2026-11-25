@@ -1,6 +1,8 @@
 'use strict';
 
+const fs = require('fs');
 const asyncHandler = require('../utils/asyncHandler');
+const ApiError = require('../utils/ApiError');
 const catalogService = require('../services/catalogService');
 
 const list = asyncHandler(async (req, res) => {
@@ -25,4 +27,16 @@ const update = asyncHandler(async (req, res) => {
   res.json(game);
 });
 
-module.exports = { list, get, create, update, meta };
+// La portada se sirve desde el mismo origen (/uploads) por la CSP.
+const uploadImage = asyncHandler(async (req, res) => {
+  if (!req.file) throw ApiError.badRequest('Selecciona una imagen');
+  const imageUrl = `/uploads/${req.file.filename}`;
+  try {
+    res.json(await catalogService.updateGame(req.params.id, { imageUrl }, req.user));
+  } catch (error) {
+    await fs.promises.unlink(req.file.path).catch(() => {});
+    throw error;
+  }
+});
+
+module.exports = { list, get, create, update, uploadImage, meta };

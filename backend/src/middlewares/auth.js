@@ -32,7 +32,9 @@ const authenticate = asyncHandler(async (req, _res, next) => {
     authUserId: profile.authUserId,
     email: profile.email,
     displayName: profile.displayName,
-    role: profile.role?.name,
+    // Misma forma que toPublicProfile (login): { name, description }.
+    // El frontend siempre lee profile.role.name, también tras recargar (F5).
+    role: profile.role ? { name: profile.role.name, description: profile.role.description } : null,
     permissions: (profile.role?.permissions || []).map((permission) => permission.code),
   };
   req.tokenClaims = claims;

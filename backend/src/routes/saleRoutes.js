@@ -19,7 +19,8 @@ router.post('/shifts/close', requirePermission('sales.write'), validate(shiftSch
 router.get('/', requirePermission('sales.read'), saleController.list);
 router.get('/:id', requirePermission('sales.read'), saleController.get);
 router.post('/', requirePermission('sales.write'), validate(createSaleSchema), saleController.create);
-router.post('/:id/cancel', requirePermission('sales.write'), validate(cancelSaleSchema), saleController.cancel);
-router.post('/:id/returns', requirePermission('sales.write'), validate(returnSchema), saleController.makeReturn);
+// Anular/devolver requiere además sales.cancel (no lo tiene el comprador).
+router.post('/:id/cancel', requirePermission('sales.write', 'sales.cancel'), validate(cancelSaleSchema), saleController.cancel);
+router.post('/:id/returns', requirePermission('sales.write', 'sales.cancel'), validate(returnSchema), saleController.makeReturn);
 
 module.exports = router;

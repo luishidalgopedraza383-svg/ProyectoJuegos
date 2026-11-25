@@ -32,6 +32,13 @@ app.use(rateLimit({
 app.use(express.json({ limit: '1mb' }));
 app.use(requestId);
 
+// Portadas subidas por el panel. Se montan antes del no-store para que el
+// navegador pueda cachearlas (Nginx las proxya en /uploads, mismo origen).
+app.use('/uploads', express.static(env.uploadDir, {
+  fallthrough: false,
+  setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=604800'),
+}));
+
 // Nunca cachear respuestas del API (datos de venta/inventario en vivo).
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');

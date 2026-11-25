@@ -86,10 +86,11 @@ CREATE TABLE IF NOT EXISTS video_games (
   category_id UUID REFERENCES categories(id),
   genre_id UUID REFERENCES genres(id),
   platform_id UUID REFERENCES platforms(id),
-  price NUMERIC(12,2) NOT NULL CHECK (price >= 0),
-  currency CHAR(3) NOT NULL DEFAULT 'COP',
+  price NUMERIC(12,2) NOT NULL CHECK (price >= 10 AND price <= 60 AND price = trunc(price)),
+  currency CHAR(3) NOT NULL DEFAULT 'USD',
   release_date DATE,
   age_rating VARCHAR(10),
+  image_url VARCHAR(500),
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -152,6 +153,36 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Tarjeta de pago ficticia (demo, marca BCP): una por usuario. El saldo se
+-- debita en la misma transacción de la venta al pagar con Tarjeta.
+CREATE TABLE IF NOT EXISTS payment_cards (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id),
+  brand VARCHAR(30) NOT NULL DEFAULT 'BCP',
+  card_number VARCHAR(19) NOT NULL,
+  holder VARCHAR(80) NOT NULL,
+  expiry VARCHAR(7) NOT NULL,
+  balance NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (balance >= 0),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Cuenta bancaria ficticia (demo) para pagar por Transferencia: una por
+-- comprador, con saldo propio en dólares. Los pagos se registran con una
+-- referencia de operación inventada.
+CREATE TABLE IF NOT EXISTS bank_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id),
+  bank VARCHAR(30) NOT NULL DEFAULT 'BCP',
+  account_number VARCHAR(20) NOT NULL,
+  holder VARCHAR(80) NOT NULL,
+  balance NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (balance >= 0),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS cash_shifts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   cashier_id UUID NOT NULL REFERENCES users(id),
@@ -195,6 +226,8 @@ CREATE TABLE IF NOT EXISTS sale_details (
   unit_price NUMERIC(12,2) NOT NULL,
   discount NUMERIC(12,2) NOT NULL DEFAULT 0,
   subtotal NUMERIC(12,2) NOT NULL,
+  -- Una clave digital por unidad vendida (formato XXXXX-XXXXX-XXXXX).
+  digital_keys VARCHAR(17)[] NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

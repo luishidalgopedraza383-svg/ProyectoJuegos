@@ -1,0 +1,54 @@
+server {
+  listen 80;
+  listen [::]:80;
+  server_name _;
+  server_tokens off;
+  root /usr/share/nginx/html;
+  index index.html;
+  client_max_body_size 4m;
+
+  # ---- Seguridad (aplica en navegador de celular y computadora) ----
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-Frame-Options "DENY" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()" always;
+  add_header Cross-Origin-Opener-Policy "same-origin" always;
+  add_header Cross-Origin-Resource-Policy "same-origin" always;
+  add_header X-Permitted-Cross-Domain-Policies "none" always;
+  # API_ORIGIN se inyecta desde docker-compose (mismo valor que VITE_API_BASE_URL).
+  add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' ${API_ORIGIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+  # HSTS solo tiene efecto cuando se sirve por HTTPS (pendiente: certificado).
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+  gzip on;
+  gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+
+  location = /health {
+    access_log off;
+    default_type application/json;
+    return 200 '{"status":"ok","service":"proyecto-juegos-web"}';
+  }
+
+  # Portadas subidas desde el panel: mismo origen para cumplir la CSP.
+  location /uploads/ {
+    proxy_pass http://backend:4000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    expires 7d;
+    add_header Cache-Control "public";
+  }
+
+  # Archivos con hash del build: cacheables.
+  location /assets/ {
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
+  }
+
+  # Cada pantalla tiene su propia URL; al refrescar, Nginx devuelve el SPA.
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}

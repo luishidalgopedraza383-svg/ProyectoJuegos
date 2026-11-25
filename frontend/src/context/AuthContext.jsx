@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
       });
       setToken(response.token);
       setProfile(response.user);
-      return true;
+      return response.user;
     } catch (err) {
       setError(err.message || 'No fue posible iniciar sesión');
       return false;

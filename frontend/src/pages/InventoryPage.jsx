@@ -3,6 +3,14 @@ import { api } from '../services/api';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { useAuth } from '../context/AuthContext';
 
+const movementLabels = {
+  entry: 'Entrada (+)',
+  exit: 'Salida (−)',
+  sale: 'Venta (−)',
+  return: 'Devolución (+)',
+  adjustment: 'Ajuste',
+};
+
 export default function InventoryPage() {
   const { can } = useAuth();
   const canWrite = can('inventory.write');
@@ -11,6 +19,7 @@ export default function InventoryPage() {
   const [movements, setMovements] = useState([]);
   const [form, setForm] = useState({ itemId: '', movementType: 'entry', quantity: 1, reason: '' });
   const [minDrafts, setMinDrafts] = useState({});
+  const [stockDrafts, setStockDrafts] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -41,6 +50,38 @@ export default function InventoryPage() {
       });
       setMessage('Movimiento registrado.');
       setForm({ ...form, quantity: 1, reason: '' });
+      await reload();
+    } catch (err) { setError(err.message); }
+  };
+
+  // Atajo para aumentar o quitar unidades sin escribir el formulario de movimientos.
+  const adjustStock = async (item, movementType) => {
+    const quantity = Number(stockDrafts[item.id] ?? '1');
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      setError('La cantidad debe ser un número entero mayor a cero.');
+      return;
+    }
+    if (movementType === 'exit' && quantity > item.quantity) {
+      setError(`No puedes quitar ${quantity} unidades: solo hay ${item.quantity} disponibles.`);
+      return;
+    }
+
+    setError('');
+    setMessage('');
+    try {
+      await api(`/inventory/${item.id}/movements`, {
+        method: 'POST',
+        body: JSON.stringify({
+          movementType,
+          quantity,
+          reason: `${movementType === 'entry' ? 'Aumento' : 'Descuento'} de stock · ${item.game?.title || item.id}`,
+        }),
+      });
+      setStockDrafts({ ...stockDrafts, [item.id]: '1' });
+      setMessage(
+        `${movementType === 'entry' ? 'Aumentadas' : 'Quitadas'} ${quantity} `
+        + `unidades de ${item.game?.title}.`,
+      );
       await reload();
     } catch (err) { setError(err.message); }
   };
@@ -87,12 +128,12 @@ export default function InventoryPage() {
             <div>
               <label>Tipo</label>
               <select value={form.movementType} onChange={(e) => setForm({ ...form, movementType: e.target.value })}>
-                <option value="entry">Entrada</option>
-                <option value="exit">Salida</option>
-                <option value="adjustment">Ajuste</option>
+                <option value="entry">Entrada (sumar stock)</option>
+                <option value="exit">Salida (quitar stock)</option>
+                <option value="adjustment">Ajuste (personalizado)</option>
               </select>
             </div>
-            <div><label>Cantidad</label><input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required /></div>
+            <div><label>Cantidad</label><input type="number" min="1" step="1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required /></div>
             <div><label>Motivo</label><input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} required /></div>
             <button className="btn" type="submit">Guardar</button>
           </form>
@@ -106,6 +147,7 @@ export default function InventoryPage() {
             <tr>
               <th>Juego</th><th>Tipo</th><th>Disponible</th><th>Mínimo</th><th>Estado</th>
               {canWrite && <th>Stock mínimo</th>}
+              {canWrite && <th>Ajustar stock</th>}
             </tr>
           </thead>
           <tbody>
@@ -114,7 +156,7 @@ export default function InventoryPage() {
               return (
                 <tr key={item.id}>
                   <td>{item.game?.title}</td>
-                  <td>{item.itemType === 'digital_key' ? 'Llave digital' : 'Copia física'}</td>
+                  <td>{item.itemType === 'digital_key' ? 'Clave digital' : 'Copia física'}</td>
                   <td className="num">{item.quantity}</td>
                   <td className="num">{item.minQuantity}</td>
                   <td><span className={`badge ${low ? 'warn' : 'ok'}`}>{low ? 'Stock bajo' : 'OK'}</span></td>
@@ -132,10 +174,35 @@ export default function InventoryPage() {
                       </div>
                     </td>
                   )}
+                  {canWrite && (
+                    <td>
+                      <div className="row">
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          aria-label={`Cantidad a ajustar de ${item.game?.title}`}
+                          style={{ width: '80px' }}
+                          value={stockDrafts[item.id] ?? '1'}
+                          onChange={(e) => setStockDrafts({ ...stockDrafts, [item.id]: e.target.value })}
+                        />
+                        <button className="btn btn-ghost btn-sm" onClick={() => adjustStock(item, 'entry')}>
+                          + Aumentar
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => adjustStock(item, 'exit')}
+                          disabled={item.quantity <= 0}
+                        >
+                          − Quitar
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}
-            {!items.length && <tr><td colSpan={canWrite ? 6 : 5} className="muted">No hay ítems de inventario.</td></tr>}
+            {!items.length && <tr><td colSpan={canWrite ? 7 : 5} className="muted">No hay ítems de inventario.</td></tr>}
           </tbody>
         </table>
       </section>
@@ -149,7 +216,7 @@ export default function InventoryPage() {
               <tr key={movement.id}>
                 <td className="num">{new Date(movement.createdAt).toLocaleString('es-CO')}</td>
                 <td>{movement.item?.game?.title}</td>
-                <td>{movement.movementType}</td>
+                <td>{movementLabels[movement.movementType] || movement.movementType}</td>
                 <td className="num">{movement.quantity > 0 ? `+${movement.quantity}` : movement.quantity}</td>
                 <td>{movement.reason}</td>
               </tr>

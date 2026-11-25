@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
+import { money } from '../utils/money';
 
 export default function ReportsPage() {
   const [summary, setSummary] = useState(null);
@@ -20,8 +21,6 @@ export default function ReportsPage() {
 
   useEffect(() => { reload(); }, [reload]);
   useAutoRefresh(reload, { intervalMs: 30000 });
-
-  const money = (value) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value || 0);
 
   return (
     <>

@@ -4,6 +4,7 @@ const { Router } = require('express');
 const { apiPrefix } = require('../config/env');
 
 const authRoutes = require('./authRoutes');
+const publicRoutes = require('./publicRoutes');
 const catalogRoutes = require('./catalogRoutes');
 const inventoryRoutes = require('./inventoryRoutes');
 const saleRoutes = require('./saleRoutes');
@@ -15,6 +16,7 @@ const ApiError = require('../utils/ApiError');
 const router = Router();
 
 router.use('/auth', authRoutes);
+router.use('/public', publicRoutes);
 router.use('/games', catalogRoutes);
 router.use('/inventory', inventoryRoutes);
 router.use('/sales', saleRoutes);

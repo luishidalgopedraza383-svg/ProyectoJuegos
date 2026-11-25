@@ -25,7 +25,7 @@ const {
   Category, Genre, Platform, VideoGame,
   InventoryItem, InventoryMovement,
   Customer, LoyaltyMovement,
-  PaymentMethod, CashShift, Sale, SaleDetail, Payment,
+  PaymentMethod, CashShift, Sale, SaleDetail, Payment, PaymentCard, BankAccount,
   Promotion, PromotionGame, SaleReturn, AuditLog,
 } = models;
 
@@ -38,6 +38,12 @@ Permission.belongsToMany(Role, {
 
 User.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
 Role.hasMany(User, { foreignKey: 'roleId', as: 'users' });
+
+User.hasOne(PaymentCard, { foreignKey: 'userId', as: 'card' });
+PaymentCard.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasOne(BankAccount, { foreignKey: 'userId', as: 'bankAccount' });
+BankAccount.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 VideoGame.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
 VideoGame.belongsTo(Genre, { foreignKey: 'genreId', as: 'genre' });

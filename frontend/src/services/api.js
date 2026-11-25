@@ -22,8 +22,9 @@ export const clearToken = () => setToken(null);
 
 export const api = async (path, options = {}) => {
   const token = getToken();
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers || {}),
   };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -36,7 +37,11 @@ export const api = async (path, options = {}) => {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401) clearToken();
-    throw new Error(payload?.error?.message || `Error ${response.status}`);
+    const problem = payload?.error;
+    // Zod devuelve el motivo concreto (por ejemplo, "El precio máximo es 60 USD").
+    const detail = problem?.details?.formErrors?.find(Boolean)
+      || Object.values(problem?.details?.fieldErrors || {}).flat().find(Boolean);
+    throw new Error(detail || problem?.message || `Error ${response.status}`);
   }
   return payload;
 };

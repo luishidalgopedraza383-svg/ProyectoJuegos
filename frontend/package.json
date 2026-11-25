@@ -1,9 +1,9 @@
 {
-  "name": "proyecto-juegos-frontend",
+  "name": "playvibe-frontend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Cliente web de Proyecto Juegos - tienda de videojuegos",
+  "description": "Cliente web de PlayVibe - tienda de videojuegos",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

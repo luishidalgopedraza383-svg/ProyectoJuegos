@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Portada Xbox">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b4a2f"/>
+      <stop offset="1" stop-color="#06150f"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <circle cx="520" cy="80" r="170" fill="#22c55e" opacity="0.2"/>
+  <text x="48" y="125" fill="#ffffff" font-family="Arial, sans-serif" font-size="64" font-weight="700">XBOX</text>
+  <text x="52" y="175" fill="#86efac" font-family="Arial, sans-serif" font-size="26" letter-spacing="6">SERIES X|S</text>
+  <circle cx="470" cy="245" r="62" fill="none" stroke="#ffffff" stroke-width="12" opacity="0.6"/>
+  <path d="M440 215l60 60M500 215l-60 60" stroke="#ffffff" stroke-width="12" stroke-linecap="round" opacity="0.6"/>
+  <text x="48" y="320" fill="#64748b" font-family="Arial, sans-serif" font-size="18" letter-spacing="3">PORTADA DE EJEMPLO</text>
+</svg>

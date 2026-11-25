@@ -41,6 +41,14 @@ module.exports = function errorHandler(err, req, res, _next) {
     details = undefined;
   }
 
+  if (err.name === 'MulterError') {
+    status = 400;
+    message = err.code === 'LIMIT_FILE_SIZE'
+      ? 'La imagen supera el tamaño máximo de 2 MB'
+      : 'No se pudo subir la imagen';
+    details = undefined;
+  }
+
   if (status >= 500) {
     console.error(`[${req.id}] ${err.name}: ${err.message}`);
     message = 'Error interno del servidor';

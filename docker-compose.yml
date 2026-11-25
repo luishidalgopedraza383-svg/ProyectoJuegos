@@ -39,6 +39,9 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-300}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - proyecto_juegos_uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -55,10 +58,15 @@ services:
       context: ./frontend
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000/api/v1}
+        VITE_SHOW_DEMO_ACCOUNTS: ${VITE_SHOW_DEMO_ACCOUNTS:-false}
     container_name: proyecto-juegos-web
     restart: unless-stopped
+    environment:
+      # Debe coincidir con el origen de VITE_API_BASE_URL para la CSP del navegador.
+      API_ORIGIN: ${API_ORIGIN:-http://localhost:4000}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "5173:80"
     healthcheck:
@@ -69,3 +77,4 @@ services:
 
 volumes:
   proyecto_juegos_pgdata:
+  proyecto_juegos_uploads:

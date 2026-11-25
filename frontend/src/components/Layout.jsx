@@ -1,48 +1,17 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-
-const links = [
-  { to: '/', label: 'Panel', end: true },
-  { to: '/catalogo', label: 'Catálogo' },
-  { to: '/ventas', label: 'Punto de venta' },
-  { to: '/historial', label: 'Historial de ventas' },
-  { to: '/inventario', label: 'Inventario' },
-  { to: '/clientes', label: 'Clientes' },
-  { to: '/reportes', label: 'Reportes' },
-];
+import { Outlet } from 'react-router-dom';
+import Sidebar, { SidebarToggle } from './Sidebar';
+import { useSidebarVisibility } from '../hooks/useSidebarVisibility';
 
 export default function Layout() {
-  const { profile, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const onLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
+  const { hidden, toggle } = useSidebarVisibility();
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">PROYECTO <span>JUEGOS</span></div>
-        <nav className="nav">
-          {links.map((link) => (
-            <NavLink key={link.to} to={link.to} end={link.end}>{link.label}</NavLink>
-          ))}
-        </nav>
-        <div className="spacer" />
-        <div>
-          <p className="muted" style={{ fontSize: '0.8rem', marginBottom: '0.25rem' }}>
-            {profile?.displayName || 'Usuario'}
-          </p>
-          {profile?.role?.name && (
-            <span className="badge" style={{ marginBottom: '0.5rem' }}>{profile.role.name}</span>
-          )}
-          <div style={{ marginTop: '0.5rem' }}>
-            <button className="btn btn-ghost btn-sm" onClick={onLogout}>Cerrar sesión</button>
-          </div>
-        </div>
-      </aside>
+    <div className={`app-shell ${hidden ? 'sidebar-hidden' : ''}`}>
+      <Sidebar hidden={hidden} onToggle={toggle} />
       <main className="main">
+        <div className="content-toolbar">
+          <SidebarToggle hidden={hidden} onToggle={toggle} />
+        </div>
         <Outlet />
       </main>
     </div>

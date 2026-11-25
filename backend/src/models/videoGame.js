@@ -11,10 +11,15 @@ module.exports = (sequelize) =>
     categoryId: { type: DataTypes.UUID, references: { model: 'categories', key: 'id' } },
     genreId: { type: DataTypes.UUID, references: { model: 'genres', key: 'id' } },
     platformId: { type: DataTypes.UUID, references: { model: 'platforms', key: 'id' } },
-    price: { type: DataTypes.DECIMAL(12, 2), allowNull: false, validate: { min: 0 } },
-    currency: { type: DataTypes.CHAR(3), allowNull: false, defaultValue: 'COP' },
+    price: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: false,
+      validate: { min: 10, max: 60, isInt: { msg: 'El precio debe ser un número entero' } },
+    },
+    currency: { type: DataTypes.CHAR(3), allowNull: false, defaultValue: 'USD' },
     releaseDate: { type: DataTypes.DATEONLY },
     ageRating: { type: DataTypes.STRING(10) },
+    imageUrl: { type: DataTypes.STRING(500), allowNull: true, field: 'image_url' },
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
   }, {
     tableName: 'video_games',

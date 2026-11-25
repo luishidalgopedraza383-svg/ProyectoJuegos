@@ -1,24 +1,33 @@
-/* Proyecto Juegos - tokens de identidad visual (diseño propio) */
+/* PlayVibe - tokens de identidad visual (verde suave, baja saturación) */
 :root {
   --gh-font-ui: 'Space Grotesk', system-ui, sans-serif;
   --gh-font-display: 'Orbitron', 'Space Grotesk', sans-serif;
   --gh-font-numeric: 'JetBrains Mono', ui-monospace, monospace;
 
-  --gh-bg: #0a0f1f;
-  --gh-surface: #121a30;
-  --gh-surface-2: #1a2440;
-  --gh-border: #293653;
-  --gh-text: #e8edff;
-  --gh-muted: #94a3c4;
-  --gh-primary: #7c5cff;
-  --gh-primary-strong: #6742f5;
-  --gh-accent: #22d3ee;
-  --gh-success: #34d399;
-  --gh-warning: #fbbf24;
-  --gh-danger: #f87171;
+  --gh-bg: #0b1310;
+  --gh-surface: #111b17;
+  --gh-surface-2: #17241f;
+  --gh-surface-3: #203129;
+  --gh-border: #2a3b34;
+  --gh-border-soft: rgba(168, 213, 189, 0.10);
+  --gh-text: #eef4f0;
+  --gh-muted: #9aaba2;
 
-  --gh-radius: 14px;
-  --gh-radius-sm: 8px;
-  --gh-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
-  --gh-transition: 160ms ease;
+  --gh-primary: #5fa77d;
+  --gh-primary-strong: #4b8e68;
+  --gh-primary-deep: #356349;
+  --gh-accent: #a8d5bd;
+  --gh-lime: #d3e8d9;
+  --gh-success: #79c79b;
+  --gh-warning: #d9bd78;
+  --gh-danger: #d98a94;
+
+  --gh-primary-rgb: 95, 167, 125;
+  --gh-accent-rgb: 168, 213, 189;
+
+  --gh-radius: 18px;
+  --gh-radius-sm: 10px;
+  --gh-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+  --gh-glow: 0 0 24px rgba(var(--gh-primary-rgb), 0.16);
+  --gh-transition: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }

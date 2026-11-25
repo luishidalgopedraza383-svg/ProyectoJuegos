@@ -2,7 +2,7 @@
 
 const app = require('./app');
 const { sequelize } = require('./models');
-const { port, nodeEnv } = require('./config/env');
+const { port, nodeEnv, requestTimeoutMs } = require('./config/env');
 
 const start = async () => {
   try {
@@ -13,6 +13,9 @@ const start = async () => {
     const server = app.listen(port, () => {
       console.log(`Proyecto Juegos API escuchando en http://localhost:${port}`);
     });
+    // Corta conexiones lentas o abandonadas (útil en redes móviles y bots).
+    server.requestTimeout = requestTimeoutMs;
+    server.headersTimeout = requestTimeoutMs + 5000;
 
     const shutdown = async (signal) => {
       console.log(`${signal} recibido. Cerrando servidor...`);

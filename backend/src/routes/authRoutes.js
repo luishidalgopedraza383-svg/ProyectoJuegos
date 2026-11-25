@@ -15,6 +15,8 @@ const loginLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  // Solo cuentan los intentos fallidos: un usuario legítimo no consume su cupo.
+  skipSuccessfulRequests: true,
   message: { error: { message: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en unos minutos.' } },
 });
 

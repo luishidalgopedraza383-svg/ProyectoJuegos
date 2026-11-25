@@ -36,7 +36,7 @@
 
 ## Reglas de dominio
 
-- precio >= 0; cantidad > 0; stock >= 0.
+- precio entero en USD entre 10 y 60; cantidad > 0; stock >= 0.
 - Un turno abierto por cajero.
 - Pago total == subtotal - descuento (tolerancia de 0.01).
 - Puntos ganados = `floor(total / 1000)`.

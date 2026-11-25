@@ -4,11 +4,11 @@ const asyncHandler = require('../utils/asyncHandler');
 const saleService = require('../services/saleService');
 
 const list = asyncHandler(async (req, res) => {
-  res.json(await saleService.listSales(req.validated?.query || {}));
+  res.json(await saleService.listSales(req.validated?.query || {}, req.user));
 });
 
 const get = asyncHandler(async (req, res) => {
-  res.json(await saleService.getSale(req.params.id));
+  res.json(await saleService.getSale(req.params.id, req.user));
 });
 
 const create = asyncHandler(async (req, res) => {

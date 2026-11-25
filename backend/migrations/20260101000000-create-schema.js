@@ -29,7 +29,7 @@ module.exports = {
       'payments', 'sale_details', 'sales', 'cash_shifts', 'payment_methods',
       'loyalty_movements', 'customers', 'inventory_movements', 'inventory_items',
       'video_games', 'platforms', 'genres', 'categories',
-      'users', 'role_permissions', 'permissions', 'roles',
+      'payment_cards', 'users', 'role_permissions', 'permissions', 'roles',
     ];
     for (const table of tables) {
       await queryInterface.dropTable(table);
