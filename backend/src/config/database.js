@@ -1,5 +1,11 @@
 'use strict';
 
+// Require ESTÁTICO de 'pg' a propósito: Sequelize lo carga por nombre dinámico
+// (dialect: 'postgres') y el trazador de dependencias de Vercel (nft) solo
+// empaqueta los require con cadena literal. Sin esta línea la función serverless
+// falla en producción con "Please install pg package manually".
+require('pg');
+
 const { Sequelize } = require('sequelize');
 const { databaseUrl, dbSsl } = require('./env');
 
