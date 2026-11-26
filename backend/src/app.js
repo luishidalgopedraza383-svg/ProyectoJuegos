@@ -19,7 +19,7 @@ app.use(helmet());
 app.use(cors({
   origin: env.corsOrigin.split(',').map((origin) => origin.trim()),
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'X-CSRF-Token'],
   credentials: true,
 }));
 app.use(rateLimit({

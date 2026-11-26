@@ -32,6 +32,9 @@ const registerLimiter = rateLimit({
 });
 router.post('/register', registerLimiter, validate(registerSchema), authController.register);
 
+// Cerrar sesión solo borra las cookies; funciona aunque el JWT ya expiró.
+router.post('/logout', authController.logout);
+
 router.use(authenticate);
 router.get('/me', authController.me);
 router.get('/permissions', authController.permissions);

@@ -5,14 +5,25 @@ const { jwtSecret } = require('../config/env');
 const authService = require('../services/authService');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
+const { SESSION_COOKIE, SAFE_METHODS, parseCookies, assertCsrf } = require('../utils/cookies');
 
-const authenticate = asyncHandler(async (req, _res, next) => {
+// Se acepta Bearer para clientes API y, como forma principal en el navegador,
+// la cookie HttpOnly de sesión. Las peticiones con cookie que cambian estado
+// deben reenviar el token CSRF en X-CSRF-Token.
+const readCredentials = (req) => {
   const header = req.headers.authorization || '';
   const [scheme, token] = header.split(' ');
+  if (scheme === 'Bearer' && token) return { token, fromCookie: false };
 
-  if (scheme !== 'Bearer' || !token) {
-    throw ApiError.unauthorized('Se requiere un token Bearer');
-  }
+  const cookieToken = parseCookies(req.headers.cookie)[SESSION_COOKIE];
+  return { token: cookieToken || null, fromCookie: Boolean(cookieToken) };
+};
+
+const authenticate = asyncHandler(async (req, _res, next) => {
+  const { token, fromCookie } = readCredentials(req);
+  if (!token) throw ApiError.unauthorized('Se requiere una sesión activa');
+
+  if (fromCookie && !SAFE_METHODS.has(req.method)) assertCsrf(req);
 
   let claims;
   try {

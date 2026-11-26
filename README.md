@@ -10,7 +10,7 @@ Plataforma web de gestión para una **tienda de videojuegos**. Un solo sistema: 
 | Backend | Node.js + Express |
 | ORM | Sequelize |
 | Base de datos | PostgreSQL 16 (Docker) / Supabase (remoto, ya creado) |
-| Autenticación | JWT propio (HS256) + contraseñas scrypt. Supabase Auth: pendiente |
+| Autenticación | JWT propio (HS256) en cookie HttpOnly + CSRF; contraseñas scrypt. Supabase Auth: pendiente |
 | Autorización | RBAC (roles, permisos) + RLS opcional |
 | Seguridad | Helmet, CORS restringido, rate limit (general y de login), Zod, CSP, request-id |
 | Infraestructura | Docker Compose, Kubernetes, AWS (guía) |

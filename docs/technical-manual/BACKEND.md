@@ -59,6 +59,9 @@ Ver `.env.example`. En producción son obligatorias `DATABASE_URL`, `JWT_SECRET`
 
 - JWT HS256 firmado por el propio backend (`JWT_SECRET`); la identidad sale del
   claim `sub` y nunca de un `userId` enviado por el cliente.
+- La sesión del navegador viaja en la cookie HttpOnly `pj_session` (SameSite=Lax,
+  Secure en producción). El frontend reenvía `pj_csrf` en `X-CSRF-Token` en
+  POST/PATCH/DELETE. Los clientes API pueden seguir usando `Authorization: Bearer`.
 - Contraseñas cifradas con scrypt (salt aleatorio, comparación en tiempo
   constante) en `users.password_hash`; jamás en claro ni en logs.
 - Login con rate limit propio (10 intentos / 15 min por IP).

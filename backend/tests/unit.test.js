@@ -16,6 +16,10 @@ const { BANKS, bankByCode, isBankCode } = require('../src/utils/banks');
 const {
   generateAccountNumber, generateCardNumber, generateExpiry, generateCvv,
 } = require('../src/utils/wallet');
+const {
+  SESSION_COOKIE, CSRF_COOKIE, SAFE_METHODS,
+  durationMs, parseCookies,
+} = require('../src/utils/cookies');
 
 test('roundMoney redondea a dos decimales', () => {
   assert.equal(roundMoney(10.005), 10.01);
@@ -171,6 +175,23 @@ test('depositSchema exige UUID y monto positivo', () => {
   assert.equal(parse(100).success, true);
   assert.equal(parse(0).success, false);
   assert.equal(parse(-50).success, false);
+});
+
+test('las cookies de sesión y CSRF usan nombres y duración coherentes', () => {
+  assert.equal(SESSION_COOKIE, 'pj_session');
+  assert.equal(CSRF_COOKIE, 'pj_csrf');
+  assert.equal(durationMs('8h'), 8 * 60 * 60 * 1000);
+  assert.equal(durationMs('30m'), 30 * 60 * 1000);
+  assert.equal(durationMs('1d'), 24 * 60 * 60 * 1000);
+  assert.equal(SAFE_METHODS.has('GET'), true);
+  assert.equal(SAFE_METHODS.has('POST'), false);
+});
+
+test('parseCookies lee la cookie de sesión y la de CSRF', () => {
+  const cookies = parseCookies(`theme=oscuro; ${SESSION_COOKIE}=abc.def; ${CSRF_COOKIE}=token%2Duno`);
+  assert.equal(cookies[SESSION_COOKIE], 'abc.def');
+  assert.equal(cookies[CSRF_COOKIE], 'token-uno');
+  assert.deepEqual(parseCookies(), {});
 });
 
 test('los generadores de billetera producen datos ficticios con formato válido', () => {

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api, clearToken, getToken, setToken } from '../services/api';
+import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -19,20 +19,22 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Restaura la sesión desde el token guardado (si existe).
+  // La sesión vive en una cookie HttpOnly: siempre se intenta /auth/me al
+  // cargar; si no hay cookie, el backend responde 401 sin exponer el token.
   useEffect(() => {
     let cancelled = false;
     const bootstrap = async () => {
-      if (!getToken()) {
-        if (!cancelled) setLoading(false);
-        return;
-      }
-      const ok = await loadProfile();
-      if (!ok) clearToken();
+      await loadProfile();
       if (!cancelled) setLoading(false);
     };
+    const onUnauthorized = () => setProfile(null);
+
     bootstrap();
-    return () => { cancelled = true; };
+    window.addEventListener('pj:unauthorized', onUnauthorized);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('pj:unauthorized', onUnauthorized);
+    };
   }, [loadProfile]);
 
   const login = async (email, password) => {
@@ -42,7 +44,6 @@ export function AuthProvider({ children }) {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-      setToken(response.token);
       setProfile(response.user);
       return response.user;
     } catch (err) {
@@ -51,7 +52,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Registro público: el backend devuelve token y perfil igual que el login.
+  // Registro público: el backend crea la billetera y abre la sesión igual que el login.
   const register = async (payload) => {
     setError('');
     try {
@@ -59,7 +60,6 @@ export function AuthProvider({ children }) {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      setToken(response.token);
       setProfile(response.user);
       return response;
     } catch (err) {
@@ -68,8 +68,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    clearToken();
+  const logout = async () => {
+    try {
+      await api('/auth/logout', { method: 'POST' });
+    } catch {
+      // Aun si falla la red, se cierra la interfaz; la cookie expira sola.
+    }
     setProfile(null);
   };
 
