@@ -46,7 +46,9 @@ const topGames = async () => db.SaleDetail.findAll({
     },
     { model: db.VideoGame, as: 'game', attributes: ['id', 'title', 'sku'] },
   ],
-  group: ['SaleDetail.videoGameId', 'game.id'],
+  // Con `underscored: true` la columna real es video_game_id: usar el nombre
+  // del atributo en GROUP BY generaba "videoGameId" y PostgreSQL fallaba.
+  group: [db.sequelize.col('SaleDetail.video_game_id'), db.sequelize.col('game.id')],
   order: [[db.sequelize.literal('"unitsSold"'), 'DESC']],
   limit: 10,
 });
@@ -54,12 +56,13 @@ const topGames = async () => db.SaleDetail.findAll({
 const salesByDay = async () => db.Sale.findAll({
   where: { status: 'completed' },
   attributes: [
-    [db.sequelize.fn('DATE', db.sequelize.col('createdAt')), 'day'],
+    [db.sequelize.fn('DATE', db.sequelize.col('created_at')), 'day'],
     [db.sequelize.fn('COUNT', db.sequelize.col('id')), 'sales'],
     [db.sequelize.fn('SUM', db.sequelize.col('total')), 'revenue'],
   ],
-  group: [db.sequelize.fn('DATE', db.sequelize.col('createdAt'))],
-  order: [db.sequelize.fn('DATE', db.sequelize.col('createdAt')), 'ASC'],
+  group: [db.sequelize.fn('DATE', db.sequelize.col('created_at'))],
+  // Se ordena como arreglo para que Sequelize no interprete 'DESC' como columna.
+  order: [[db.sequelize.fn('DATE', db.sequelize.col('created_at')), 'DESC']],
   limit: 30,
   raw: true,
 });

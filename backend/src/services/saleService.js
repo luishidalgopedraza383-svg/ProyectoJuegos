@@ -61,6 +61,24 @@ const debitLinkedCard = async (account, amount, transaction) => {
   await card.decrement('balance', { by: amount, transaction });
 };
 
+// La venta debe quedar asociada al comprador dueño de la tarjeta/cuenta, aunque
+// el POS no envíe customerId (es el flujo normal de la vitrina y del comprador).
+// Así aparece con su cliente en Ventas, "Mis compras" y acumula puntos.
+const resolveSaleCustomer = async ({ explicitCustomerId, payerUserId, transaction }) => {
+  if (explicitCustomerId) {
+    const customer = await db.Customer.findByPk(explicitCustomerId, { transaction });
+    if (!customer) throw ApiError.badRequest('El cliente indicado no existe');
+    return customer.id;
+  }
+  if (!payerUserId) return null;
+
+  const customer = await db.Customer.findOne({
+    where: { userId: payerUserId },
+    transaction,
+  });
+  return customer?.id || null;
+};
+
 // Una clave distinta por cada unidad vendida, canjeable en la plataforma.
 // Se valida contra las claves ya entregadas para no repetir ninguna.
 const generateDigitalKeys = async (quantity, transaction) => {
@@ -175,6 +193,7 @@ const createSale = async (payload, user) => {
     // Tarjeta y los bancos descuentan de una cuenta ficticia dentro de la
     // misma transacción de la venta: si el saldo no alcanza, no se guarda nada.
     const paymentRows = [];
+    const payerUserIds = [];
     for (const payment of payload.payments) {
       const method = methods.find((item) => item.id === payment.paymentMethodId);
       const { cardId, bankAccountId, ...row } = payment;
@@ -204,6 +223,7 @@ const createSale = async (payload, user) => {
         if (!isOwnCard && !(isStaff && isBuyerCard)) {
           throw ApiError.forbidden('La tarjeta indicada no existe o no es de un comprador');
         }
+        payerUserIds.push(card.userId);
         if (Number(card.balance) < amount) {
           throw ApiError.badRequest(
             `Saldo insuficiente en tu tarjeta ${card.brand} ****${card.cardNumber.slice(-4)}. `
@@ -233,6 +253,7 @@ const createSale = async (payload, user) => {
         if (!isOwnAccount && !(isStaff && isBuyerAccount)) {
           throw ApiError.forbidden('La cuenta indicada no existe o no es de un comprador');
         }
+        payerUserIds.push(account.userId);
         if (Number(account.balance) < amount) {
           throw ApiError.badRequest(
             `Saldo insuficiente en la cuenta ${account.bank} ****${account.accountNumber.slice(-4)}. `
@@ -251,10 +272,16 @@ const createSale = async (payload, user) => {
       paymentRows.push(row);
     }
 
+    const customer = await resolveSaleCustomer({
+      explicitCustomerId: payload.customerId,
+      payerUserId: payerUserIds[0] || null,
+      transaction,
+    });
+
     const sale = await db.Sale.create({
       code: generateSaleCode(),
       cashShiftId: shift.id,
-      customerId: payload.customerId || null,
+      customerId: customer?.id || null,
       sellerId: user.id,
       subtotal,
       discount: totalDiscount,
@@ -276,11 +303,9 @@ const createSale = async (payload, user) => {
       }, transaction);
     }
 
-    if (payload.customerId) {
+    if (customer) {
       const earned = Math.floor(toNumber(total) / 1000);
       if (earned > 0) {
-        const customer = await db.Customer.findByPk(payload.customerId, { transaction, lock: Transaction.LOCK.UPDATE });
-        if (!customer) throw ApiError.badRequest('El cliente indicado no existe');
         await customer.increment('points', { by: earned, transaction });
         await db.LoyaltyMovement.create({
           customerId: customer.id,
