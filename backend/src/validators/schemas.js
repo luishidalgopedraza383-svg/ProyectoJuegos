@@ -178,6 +178,22 @@ const publicCatalogQuerySchema = z.object({
   }).default({}),
 });
 
+// Catálogo del panel: onlyActive=false permite ver también los juegos
+// desactivados para poder reactivarlos o cargarles stock.
+const listGamesSchema = z.object({
+  body: z.object({}).default({}),
+  params: z.object({}).default({}),
+  query: z.object({
+    search: z.string().trim().max(120).optional(),
+    platformId: uuid.optional(),
+    genreId: uuid.optional(),
+    categoryId: uuid.optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    offset: z.coerce.number().int().min(0).optional(),
+    onlyActive: z.enum(['true', 'false']).optional(),
+  }).default({}),
+});
+
 module.exports = {
   loginSchema,
   registerSchema,
@@ -193,4 +209,5 @@ module.exports = {
   updateItemSchema,
   customerSchema,
   publicCatalogQuerySchema,
+  listGamesSchema,
 };

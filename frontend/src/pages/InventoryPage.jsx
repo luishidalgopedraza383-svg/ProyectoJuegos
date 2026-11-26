@@ -122,7 +122,11 @@ export default function InventoryPage() {
               <label>Videojuego</label>
               <select value={form.itemId} onChange={(e) => setForm({ ...form, itemId: e.target.value })} required>
                 <option value="">Seleccione...</option>
-                {items.map((item) => <option key={item.id} value={item.id}>{item.game?.title}</option>)}
+                {items.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.game?.title}{item.game?.isActive === false ? ' (inactivo)' : ''}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -155,7 +159,10 @@ export default function InventoryPage() {
               const low = item.quantity <= item.minQuantity;
               return (
                 <tr key={item.id}>
-                  <td>{item.game?.title}</td>
+                  <td>
+                    {item.game?.title}
+                    {item.game?.isActive === false && <span className="badge warn">Inactivo</span>}
+                  </td>
                   <td>{item.itemType === 'digital_key' ? 'Clave digital' : 'Copia física'}</td>
                   <td className="num">{item.quantity}</td>
                   <td className="num">{item.minQuantity}</td>

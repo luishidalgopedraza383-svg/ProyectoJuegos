@@ -36,7 +36,9 @@ const adjustStock = async (
 
 const listItems = async () => db.InventoryItem.findAll({
   include: [
-    { model: db.VideoGame, as: 'game', attributes: ['id', 'title', 'sku'] },
+    // Se muestra isActive para que un juego desactivado siga siendo visible y
+    // editable desde Inventario (solo se oculta del catálogo público/POS).
+    { model: db.VideoGame, as: 'game', attributes: ['id', 'title', 'sku', 'isActive'] },
   ],
   order: [['quantity', 'ASC']],
 });

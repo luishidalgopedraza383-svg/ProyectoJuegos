@@ -104,14 +104,25 @@ const listPublicGames = async (query = {}) => {
 };
 
 const createGame = async (payload, user) => {
-  // La moneda la fija el servidor, nunca el cliente.
-  const game = await db.VideoGame.create({ ...payload, currency: 'USD' });
-  await db.AuditLog.create({
-    userId: user.id,
-    action: 'GAME_CREATED',
-    entity: 'VideoGame',
-    entityId: game.id,
-    payload: { title: game.title, sku: game.sku },
+  // La moneda la fija el servidor, nunca el cliente. Todo el juego se crea en
+  // una transacción: sin su fila de inventario no aparecería en /inventory ni
+  // se podría vender (saleService exige inventario configurado).
+  const game = await db.sequelize.transaction(async (transaction) => {
+    const created = await db.VideoGame.create({ ...payload, currency: 'USD' }, { transaction });
+    await db.InventoryItem.create({
+      videoGameId: created.id,
+      itemType: 'digital_key',
+      quantity: 0,
+      minQuantity: 5,
+    }, { transaction });
+    await db.AuditLog.create({
+      userId: user.id,
+      action: 'GAME_CREATED',
+      entity: 'VideoGame',
+      entityId: created.id,
+      payload: { title: created.title, sku: created.sku, initialStock: 0 },
+    }, { transaction });
+    return created;
   });
   return getGame(game.id);
 };

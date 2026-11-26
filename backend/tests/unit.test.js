@@ -8,7 +8,7 @@ const { generateDigitalKey, DIGITAL_KEY_PATTERN } = require('../src/utils/digita
 const ApiError = require('../src/utils/ApiError');
 const {
   createSaleSchema, movementSchema, createGameSchema,
-  registerSchema, createWalletSchema, depositSchema,
+  registerSchema, createWalletSchema, depositSchema, listGamesSchema,
 } = require('../src/validators/schemas');
 const { signedQuantity } = require('../src/utils/stock');
 const { filterPayableMethods } = require('../src/utils/paymentMethods');
@@ -149,6 +149,18 @@ test('registerSchema y createWalletSchema validan banco y saldo inicial', () => 
   assert.equal(parseRegister({ ...base, bank: 'SCOTIABANK' }).success, false);
   assert.equal(parseWallet({ ...base, initialBalance: 0 }).success, false);
   assert.equal(parseWallet({ ...base, email: 'correo-invalido' }).success, false);
+});
+
+test('listGamesSchema conserva onlyActive=false para ver juegos inactivos', () => {
+  const parsed = listGamesSchema.safeParse({
+    body: {},
+    params: {},
+    query: { onlyActive: 'false', limit: '100' },
+  });
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.data.query.onlyActive, 'false');
+  assert.equal(parsed.data.query.limit, 100);
+  assert.equal(listGamesSchema.safeParse({ query: { onlyActive: 'otro' } }).success, false);
 });
 
 test('depositSchema exige UUID y monto positivo', () => {
