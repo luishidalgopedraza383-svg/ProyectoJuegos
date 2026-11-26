@@ -20,11 +20,46 @@ const generateSaleCode = () => {
   return `GH-${stamp}-${random}`;
 };
 
-// Medios de pago que debitan una cuenta bancaria del comprador: los seis
-// bancos bolivianos del POS. No se exige que la cuenta pertenezca al banco
-// elegido (es una demo: lo que importa es que la cuenta tenga saldo).
-const BANK_METHOD_CODES = ['MERCANTIL', 'BNB', 'UNION', 'BCP', 'SOL', 'FORTALEZA'];
+// Medios de pago que debitan una cuenta bancaria del comprador: los bancos
+// bolivianos del POS (incluido Banco Económico). No se exige que la cuenta
+// pertenezca al banco elegido (es una demo: lo importante es que tenga saldo).
+const BANK_METHOD_CODES = ['MERCANTIL', 'BNB', 'UNION', 'BCP', 'ECONOMICO', 'SOL', 'FORTALEZA'];
 const isBankMethod = (code) => BANK_METHOD_CODES.includes(code);
+
+// Cuenta y tarjeta de una misma billetera se mantienen con el mismo saldo:
+// al cobrar con una, se descuenta también de la otra vinculada (si existe).
+// Las billeteras antiguas sin vínculo siguen funcionando como antes.
+const debitLinkedAccount = async (card, amount, transaction) => {
+  if (!card.bankAccountId) return;
+  const account = await db.BankAccount.findByPk(card.bankAccountId, {
+    transaction,
+    lock: Transaction.LOCK.UPDATE,
+  });
+  if (!account) return;
+  if (Number(account.balance) < amount) {
+    throw ApiError.badRequest(
+      `Saldo insuficiente en la cuenta vinculada ${account.bank} ****${account.accountNumber.slice(-4)}. `
+      + `Disponible: ${Number(account.balance)}; requerido: ${amount}`,
+    );
+  }
+  await account.decrement('balance', { by: amount, transaction });
+};
+
+const debitLinkedCard = async (account, amount, transaction) => {
+  const card = await db.PaymentCard.findOne({
+    where: { bankAccountId: account.id, isActive: true },
+    transaction,
+    lock: Transaction.LOCK.UPDATE,
+  });
+  if (!card) return;
+  if (Number(card.balance) < amount) {
+    throw ApiError.badRequest(
+      `Saldo insuficiente en la tarjeta vinculada ${card.brand} ****${card.cardNumber.slice(-4)}. `
+      + `Disponible: ${Number(card.balance)}; requerido: ${amount}`,
+    );
+  }
+  await card.decrement('balance', { by: amount, transaction });
+};
 
 // Una clave distinta por cada unidad vendida, canjeable en la plataforma.
 // Se valida contra las claves ya entregadas para no repetir ninguna.
@@ -176,6 +211,7 @@ const createSale = async (payload, user) => {
           );
         }
         await card.decrement('balance', { by: amount, transaction });
+        await debitLinkedAccount(card, amount, transaction);
         row.reference = `${card.brand} ****${card.cardNumber.slice(-4)}`;
       } else if (isBankMethod(method.code)) {
         if (!bankAccountId) {
@@ -204,6 +240,7 @@ const createSale = async (payload, user) => {
           );
         }
         await account.decrement('balance', { by: amount, transaction });
+        await debitLinkedCard(account, amount, transaction);
         // Operación ficticia: deja una referencia distinta en cada venta.
         row.reference = `${account.bank} ****${account.accountNumber.slice(-4)} · OP-${generateSaleCode().slice(3)}`;
       } else {

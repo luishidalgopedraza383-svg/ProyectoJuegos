@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicLayout from './components/PublicLayout';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import StorefrontPage from './pages/StorefrontPage';
 import DashboardPage from './pages/DashboardPage';
 import CatalogPage from './pages/CatalogPage';
@@ -32,6 +33,7 @@ export default function App() {
         <CartProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/registro" element={<RegisterPage />} />
 
             {/* Vitrina pública: se puede ver sin cuenta, pero no se puede comprar. */}
             <Route element={<PublicLayout />}>

@@ -7,6 +7,9 @@ const listCustomers = async (query = {}) => {
   const limit = Math.min(Number(query.limit) || 50, 100);
   const offset = Math.max(Number(query.offset) || 0, 0);
   const { rows, count } = await db.Customer.findAndCountAll({
+    // Incluye el usuario vinculado para que /clientes muestre los registros
+    // nuevos creados desde una billetera ficticia.
+    include: [{ model: db.User, as: 'user', attributes: ['id', 'email', 'displayName'] }],
     order: [['firstName', 'ASC']],
     limit,
     offset,

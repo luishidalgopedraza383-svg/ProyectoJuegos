@@ -4,13 +4,13 @@ const { DataTypes } = require('sequelize');
 
 // Cuenta bancaria ficticia (demo) usada por los medios de pago de banco.
 // Igual que la tarjeta, se debita dentro de la transacción de la venta.
+// Un usuario puede crear varias billeteras, así que userId no es único.
 module.exports = (sequelize) =>
   sequelize.define('BankAccount', {
     id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
-      unique: true,
       field: 'user_id',
       references: { model: 'users', key: 'id' },
     },

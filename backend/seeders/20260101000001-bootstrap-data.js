@@ -137,8 +137,8 @@ const games = [
   { id: '88888888-8888-4888-8888-888888888826', inventoryId: '99999999-9999-4999-8999-999999999926', title: 'Battlefield 6', sku: 'PC-BF6-026', price: 60, platform: 'PC', category: 'Acción', genre: 'Shooter', ageRating: 'M', stock: 11, minQuantity: 7, itemType: 'digital_key', description: 'Guerras a gran escala con combate combinado.' },
 ];
 
-// Medios de pago de la demo: Tarjeta y los seis bancos bolivianos descuentan
-// de una cuenta ficticia con saldo. Efectivo y la Transferencia genérica fueron
+// Medios de pago de la demo: Tarjeta y los bancos bolivianos descuentan de una
+// cuenta ficticia con saldo. Efectivo y la Transferencia genérica fueron
 // retirados por la migración `bolivian-banks` y ya no se insertan.
 const paymentMethods = [
   { id: '77777777-7777-4777-8777-777777777772', code: 'CARD', name: 'Tarjeta' },
@@ -146,6 +146,7 @@ const paymentMethods = [
   { id: '77777777-7777-4777-8777-777777777775', code: 'BNB', name: 'BNB' },
   { id: '77777777-7777-4777-8777-777777777776', code: 'UNION', name: 'Banco Unión' },
   { id: '77777777-7777-4777-8777-777777777777', code: 'BCP', name: 'BCP' },
+  { id: '77777777-7777-4777-8777-777777777780', code: 'ECONOMICO', name: 'Banco Económico' },
   { id: '77777777-7777-4777-8777-777777777778', code: 'SOL', name: 'Banco Sol' },
   { id: '77777777-7777-4777-8777-777777777779', code: 'FORTALEZA', name: 'Banco Fortaleza' },
 ];

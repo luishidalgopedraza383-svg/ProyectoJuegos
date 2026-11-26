@@ -10,6 +10,7 @@ const inventoryRoutes = require('./inventoryRoutes');
 const saleRoutes = require('./saleRoutes');
 const customerRoutes = require('./customerRoutes');
 const paymentRoutes = require('./paymentRoutes');
+const walletRoutes = require('./walletRoutes');
 const reportRoutes = require('./reportRoutes');
 const ApiError = require('../utils/ApiError');
 
@@ -22,6 +23,7 @@ router.use('/inventory', inventoryRoutes);
 router.use('/sales', saleRoutes);
 router.use('/customers', customerRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/wallets', walletRoutes);
 router.use('/reports', reportRoutes);
 
 // Prefijo publicado en /api/v1

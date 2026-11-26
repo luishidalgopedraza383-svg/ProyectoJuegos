@@ -4,6 +4,8 @@ import { api } from '../services/api';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import WalletModal from '../components/WalletModal';
+import PaymentCardVisual from '../components/PaymentCardVisual';
 import { money } from '../utils/money';
 
 export default function PosPage() {
@@ -20,14 +22,17 @@ export default function PosPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [lastSale, setLastSale] = useState(null);
+  // 'create' | 'deposit' | false: abre el modal junto al selector de tarjeta.
+  const [walletTab, setWalletTab] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const presetHandled = useRef(false);
 
   // El carrito es el mismo que usa la tienda (/carrito): se carga en la
   // página y se vacía al cobrar.
   const { items: cart, addItem, setQuantity, removeItem, clear, restore, total } = useCart();
-  const { profile } = useAuth();
+  const { profile, can } = useAuth();
   const isBuyer = profile?.role?.name === 'comprador';
+  const allowTargetEmail = !isBuyer && (can('customers.write') || can('sales.write'));
   const card = cards.find((item) => item.id === cardId) || null;
 
   const reload = useCallback(async () => {
@@ -55,6 +60,11 @@ export default function PosPage() {
       accountsData.some((item) => item.id === current) ? current : (accountsData[0]?.id || '')
     ));
   }, [isBuyer]);
+
+  const onWalletDone = async (wallet) => {
+    await reload();
+    setMessage(wallet ? 'Billetera actualizada. La tarjeta ya está disponible para cobrar.' : '');
+  };
 
   useEffect(() => {
     reload().catch(() => {});
@@ -307,31 +317,37 @@ export default function PosPage() {
                 {cards.map((item) => (
                   <option key={item.id} value={item.id}>
                     {isBuyer
-                      ? item.maskedNumber
-                      : `${item.owner?.displayName || item.holder} · ${item.maskedNumber} · ${money(item.balance)}`}
+                      ? `${item.bankName || item.brand} · ${item.cardNumber || item.maskedNumber}`
+                      : `${item.owner?.displayName || item.holder} · ${item.bankName || item.brand} · ${item.cardNumber || item.maskedNumber} · ${money(item.balance)}`}
                   </option>
                 ))}
               </select>
             </label>
+            <div className="row wallet-actions">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setWalletTab('create')}
+              >
+                + Crear cuenta / Billetera ficticia
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setWalletTab('deposit')}
+              >
+                Recargar saldo
+              </button>
+            </div>
             {!isBuyer && (
               <p className="muted">El cobro se descuenta de la tarjeta individual del comprador elegido.</p>
             )}
             {card ? (
-              <div className="payment-card">
-                <div className="payment-card__head">
-                  <span className="payment-card__brand">{card.brand}</span>
-                  <span className="payment-card__tag">Ficticia · demo</span>
-                </div>
-                <div className="payment-card__number num">{card.maskedNumber}</div>
-                <div className="payment-card__meta">
-                  {!isBuyer && card.owner && (
-                    <div><span>Comprador</span><strong>{card.owner.displayName}</strong></div>
-                  )}
-                  <div><span>Titular</span><strong>{card.holder}</strong></div>
-                  <div><span>Vence</span><strong>{card.expiry}</strong></div>
-                  <div><span>Saldo</span><strong className="money">{money(card.balance)}</strong></div>
-                </div>
-              </div>
+              <PaymentCardVisual
+                card={card}
+                owner={isBuyer ? null : card.owner}
+                label={card.bankName || card.brand}
+              />
             ) : (
               <p className="muted">
                 {isBuyer
@@ -361,20 +377,11 @@ export default function PosPage() {
               {`${!isBuyer ? 'El cobro se descuenta de la cuenta individual del comprador elegido. ' : ''}El banco del método no necesita coincidir con el de la cuenta (demo).`}
             </p>
             {account ? (
-              <div className="payment-card">
-                <div className="payment-card__head">
-                  <span className="payment-card__brand">{account.bank}</span>
-                  <span className="payment-card__tag">Cuenta ficticia · demo</span>
-                </div>
-                <div className="payment-card__number num">{account.maskedNumber}</div>
-                <div className="payment-card__meta">
-                  {!isBuyer && account.owner && (
-                    <div><span>Comprador</span><strong>{account.owner.displayName}</strong></div>
-                  )}
-                  <div><span>Titular</span><strong>{account.holder}</strong></div>
-                  <div><span>Saldo</span><strong className="money">{money(account.balance)}</strong></div>
-                </div>
-              </div>
+              <PaymentCardVisual
+                account={account}
+                owner={isBuyer ? null : account.owner}
+                label={account.bankName || account.bank}
+              />
             ) : (
               <p className="muted">
                 {isBuyer
@@ -385,6 +392,16 @@ export default function PosPage() {
           </div>
         )}
       </section>
+
+      <WalletModal
+        key={walletTab || 'closed'}
+        open={Boolean(walletTab)}
+        initialTab={walletTab || 'create'}
+        allowTargetEmail={allowTargetEmail}
+        defaultHolder={profile?.displayName || ''}
+        onClose={() => setWalletTab(false)}
+        onDone={onWalletDone}
+      />
     </>
   );
 }

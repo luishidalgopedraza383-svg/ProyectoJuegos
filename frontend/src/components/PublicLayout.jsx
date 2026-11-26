@@ -37,7 +37,10 @@ export default function PublicLayout() {
                 <button className="btn btn-ghost btn-sm" onClick={onLogout}>Cerrar sesión</button>
               </>
             ) : (
-              <Link className="btn btn-sm" to="/login">Iniciar sesión</Link>
+              <>
+                <Link className="btn btn-ghost btn-sm" to="/registro">Crear cuenta</Link>
+                <Link className="btn btn-sm" to="/login">Iniciar sesión</Link>
+              </>
             )}
           </nav>
         </header>

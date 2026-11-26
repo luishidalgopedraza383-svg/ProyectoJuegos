@@ -35,6 +35,19 @@ export default function ReportsPage() {
         <div className="card"><div className="label">Stock bajo</div><div className="value">{summary?.lowStockItems ?? '—'}</div></div>
       </div>
 
+      {top[0] && (
+        <section className="panel top-game">
+          <div>
+            <span className="eyebrow">Juego más comprado</span>
+            <h2>{top[0].game?.title || '—'}</h2>
+            <p className="muted">
+              {top[0].unitsSold} unidades vendidas · {money(top[0].revenue)} en ingresos
+            </p>
+          </div>
+          <span className="top-game__rank">#1</span>
+        </section>
+      )}
+
       <section className="panel">
         <h2>Ventas por día</h2>
         <table>

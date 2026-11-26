@@ -17,3 +17,6 @@ infrastructure/kubernetes/secrets.yaml
 
 # Configuración local de OpenCode (MCP, etc.)
 opencode.json
+
+.vercel
+.env*

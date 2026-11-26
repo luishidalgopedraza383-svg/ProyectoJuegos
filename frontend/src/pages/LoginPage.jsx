@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 // Solo se muestran si se activan explícitamente para una demo local.
@@ -80,6 +80,10 @@ export default function LoginPage() {
             {busy ? 'Sintonizando...' : 'Entrar a PlayVibe'}
           </button>
         </form>
+
+        <p className="muted login-register-link">
+          ¿No tienes cuenta? <Link to="/registro">Crear cuenta / Billetera ficticia</Link>
+        </p>
 
         <div className="login-benefits">
           <span>Stock en vivo</span>

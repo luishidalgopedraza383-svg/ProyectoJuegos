@@ -1,6 +1,7 @@
 'use strict';
 
 const { z } = require('zod');
+const { BANKS } = require('../utils/banks');
 
 const uuid = z.string().uuid();
 const positiveInt = z.number().int().positive();
@@ -11,12 +12,50 @@ const priceUsd = z.number()
   .min(10, 'El precio mínimo es 10 USD')
   .max(60, 'El precio máximo es 60 USD');
 
+// Billetera ficticia: siempre uno de los cinco bancos del formulario.
+const bankCode = z.enum(BANKS.map((bank) => bank.code));
+const walletAmount = z.number()
+  .positive('El monto debe ser mayor a cero')
+  .max(1000000, 'El monto máximo es 1,000,000 USD');
+
 const loginSchema = z.object({
   body: z.object({
     email: z.string().trim().email().max(255),
     password: z.string().min(6).max(200),
   }),
   params: z.object({}).default({}),
+  query: z.object({}).default({}),
+});
+
+// Registro público: crea usuario comprador + su primera billetera ficticia.
+const registerSchema = z.object({
+  body: z.object({
+    fullName: z.string().trim().min(3, 'Ingresa el nombre completo del titular').max(120),
+    email: z.string().trim().email().max(255),
+    password: z.string().min(6).max(200),
+    bank: bankCode,
+    initialBalance: walletAmount,
+  }),
+  params: z.object({}).default({}),
+  query: z.object({}).default({}),
+});
+
+// Billetera creada desde Ventas/Clientes. El correo es opcional: solo lo usa
+// el personal para crear la billetera de un comprador ya registrado.
+const createWalletSchema = z.object({
+  body: z.object({
+    holder: z.string().trim().min(3, 'Ingresa el nombre completo del titular').max(80),
+    bank: bankCode,
+    initialBalance: walletAmount,
+    email: z.string().trim().email().max(255).optional(),
+  }),
+  params: z.object({}).default({}),
+  query: z.object({}).default({}),
+});
+
+const depositSchema = z.object({
+  body: z.object({ amount: walletAmount }),
+  params: z.object({ id: uuid }),
   query: z.object({}).default({}),
 });
 
@@ -141,6 +180,9 @@ const publicCatalogQuerySchema = z.object({
 
 module.exports = {
   loginSchema,
+  registerSchema,
+  createWalletSchema,
+  depositSchema,
   createGameSchema,
   updateGameSchema,
   createSaleSchema,

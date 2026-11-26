@@ -39,11 +39,18 @@ Permission.belongsToMany(Role, {
 User.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
 Role.hasMany(User, { foreignKey: 'roleId', as: 'users' });
 
-User.hasOne(PaymentCard, { foreignKey: 'userId', as: 'card' });
+User.hasMany(PaymentCard, { foreignKey: 'userId', as: 'cards' });
 PaymentCard.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-User.hasOne(BankAccount, { foreignKey: 'userId', as: 'bankAccount' });
+User.hasMany(BankAccount, { foreignKey: 'userId', as: 'bankAccounts' });
 BankAccount.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Cuenta y tarjeta de la misma billetera ficticia.
+BankAccount.hasMany(PaymentCard, { foreignKey: 'bankAccountId', as: 'cards' });
+PaymentCard.belongsTo(BankAccount, { foreignKey: 'bankAccountId', as: 'bankAccount' });
+
+User.hasOne(Customer, { foreignKey: 'userId', as: 'customer' });
+Customer.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 VideoGame.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
 VideoGame.belongsTo(Genre, { foreignKey: 'genreId', as: 'genre' });

@@ -51,6 +51,23 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Registro público: el backend devuelve token y perfil igual que el login.
+  const register = async (payload) => {
+    setError('');
+    try {
+      const response = await api('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      setToken(response.token);
+      setProfile(response.user);
+      return response;
+    } catch (err) {
+      setError(err.message || 'No fue posible crear la cuenta');
+      return false;
+    }
+  };
+
   const logout = () => {
     clearToken();
     setProfile(null);
@@ -62,12 +79,13 @@ export function AuthProvider({ children }) {
     loading,
     error,
     login,
+    register,
     logout,
     loadProfile,
     role: profile?.role?.name || null,
     permissions: profile?.permissions || [],
     can: (code) => (profile?.permissions || []).includes(code),
-  }), [profile, loading, error, loadProfile]);
+  }), [profile, loading, error, loadProfile, register]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

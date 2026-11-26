@@ -124,6 +124,8 @@ CREATE INDEX IF NOT EXISTS idx_inventory_movements_item ON inventory_movements (
 
 CREATE TABLE IF NOT EXISTS customers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- Clientes creados desde una billetera ficticia están vinculados a su usuario.
+  user_id UUID UNIQUE REFERENCES users(id) ON DELETE SET NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100),
@@ -153,27 +155,29 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Tarjeta de pago ficticia (demo, marca BCP): una por usuario. El saldo se
--- debita en la misma transacción de la venta al pagar con Tarjeta.
+-- Tarjeta de pago ficticia de una billetera. Un usuario puede tener varias.
+-- El saldo se debita en la misma transacción de la venta al pagar con Tarjeta.
 CREATE TABLE IF NOT EXISTS payment_cards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL UNIQUE REFERENCES users(id),
+  user_id UUID NOT NULL REFERENCES users(id),
   brand VARCHAR(30) NOT NULL DEFAULT 'BCP',
   card_number VARCHAR(19) NOT NULL,
   holder VARCHAR(80) NOT NULL,
   expiry VARCHAR(7) NOT NULL,
+  cvv VARCHAR(4) NOT NULL DEFAULT '000',
   balance NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (balance >= 0),
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS idx_payment_cards_user ON payment_cards (user_id);
 
--- Cuenta bancaria ficticia (demo) para pagar desde los bancos del POS: una
--- por comprador, con saldo propio en dólares. Los pagos se registran con una
--- referencia de operación inventada.
+-- Cuenta bancaria ficticia (demo) para pagar desde los bancos del POS: cada
+-- billetera tiene su propia cuenta con saldo en dólares. Los pagos se registran
+-- con una referencia de operación inventada.
 CREATE TABLE IF NOT EXISTS bank_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL UNIQUE REFERENCES users(id),
+  user_id UUID NOT NULL REFERENCES users(id),
   bank VARCHAR(30) NOT NULL DEFAULT 'BCP',
   account_number VARCHAR(20) NOT NULL,
   holder VARCHAR(80) NOT NULL,
@@ -182,6 +186,11 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_user ON bank_accounts (user_id);
+
+-- La tarjeta se vincula a la cuenta de la misma billetera (ver migración
+-- wallet-accounts). Se agrega después para que la tabla de cuentas ya exista.
+ALTER TABLE payment_cards ADD COLUMN IF NOT EXISTS bank_account_id UUID REFERENCES bank_accounts(id) ON DELETE SET NULL;
 
 CREATE TABLE IF NOT EXISTS cash_shifts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

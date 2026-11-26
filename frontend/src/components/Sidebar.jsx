@@ -19,6 +19,7 @@ const PUBLIC_LINKS = [
   { to: '/', label: 'Tienda', end: true },
   { to: '/catalogo', label: 'Catálogo' },
   { to: '/carrito', label: 'Carrito' },
+  { to: '/registro', label: 'Crear cuenta' },
 ];
 
 /** Botón para ocultar/mostrar el menú lateral. Se usa dentro y fuera del aside. */
@@ -90,7 +91,10 @@ export default function Sidebar({ hidden, onToggle }) {
             <p className="muted" style={{ fontSize: '0.8rem', marginBottom: '0.5rem' }}>
               Explora el catálogo. Para comprar necesitas una cuenta.
             </p>
-            <Link className="btn btn-sm" to="/login">Iniciar sesión</Link>
+            <div className="row">
+              <Link className="btn btn-sm" to="/login">Iniciar sesión</Link>
+              <Link className="btn btn-ghost btn-sm" to="/registro">Crear cuenta</Link>
+            </div>
           </>
         )}
       </div>

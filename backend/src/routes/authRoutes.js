@@ -4,7 +4,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { authenticate } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { loginSchema } = require('../validators/schemas');
+const { loginSchema, registerSchema } = require('../validators/schemas');
 const authController = require('../controllers/authController');
 
 const router = Router();
@@ -21,6 +21,16 @@ const loginLimiter = rateLimit({
 });
 
 router.post('/login', loginLimiter, validate(loginSchema), authController.login);
+
+// El registro es público, pero con límite para evitar cuentas masivas.
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: 'Demasiados registros. Intenta de nuevo en una hora.' } },
+});
+router.post('/register', registerLimiter, validate(registerSchema), authController.register);
 
 router.use(authenticate);
 router.get('/me', authController.me);

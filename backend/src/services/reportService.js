@@ -34,10 +34,19 @@ const topGames = async () => db.SaleDetail.findAll({
   attributes: [
     'videoGameId',
     [db.sequelize.fn('SUM', db.sequelize.col('quantity')), 'unitsSold'],
-    [db.sequelize.fn('SUM', db.sequelize.col('subtotal')), 'revenue'],
+    [db.sequelize.fn('SUM', db.sequelize.col('SaleDetail.subtotal')), 'revenue'],
   ],
-  include: [{ model: db.VideoGame, as: 'game', attributes: ['id', 'title', 'sku'] }],
-  group: ['videoGameId', 'game.id'],
+  include: [
+    {
+      model: db.Sale,
+      as: 'sale',
+      attributes: [],
+      where: { status: 'completed' },
+      required: true,
+    },
+    { model: db.VideoGame, as: 'game', attributes: ['id', 'title', 'sku'] },
+  ],
+  group: ['SaleDetail.videoGameId', 'game.id'],
   order: [[db.sequelize.literal('"unitsSold"'), 'DESC']],
   limit: 10,
 });

@@ -6,9 +6,16 @@ const assert = require('node:assert/strict');
 const { roundMoney } = require('../src/utils/money');
 const { generateDigitalKey, DIGITAL_KEY_PATTERN } = require('../src/utils/digitalKey');
 const ApiError = require('../src/utils/ApiError');
-const { createSaleSchema, movementSchema, createGameSchema } = require('../src/validators/schemas');
+const {
+  createSaleSchema, movementSchema, createGameSchema,
+  registerSchema, createWalletSchema, depositSchema,
+} = require('../src/validators/schemas');
 const { signedQuantity } = require('../src/utils/stock');
 const { filterPayableMethods } = require('../src/utils/paymentMethods');
+const { BANKS, bankByCode, isBankCode } = require('../src/utils/banks');
+const {
+  generateAccountNumber, generateCardNumber, generateExpiry, generateCvv,
+} = require('../src/utils/wallet');
 
 test('roundMoney redondea a dos decimales', () => {
   assert.equal(roundMoney(10.005), 10.01);
@@ -117,4 +124,49 @@ test('filterPayableMethods deja Tarjeta y solo los bancos con cuenta propia', ()
 
   const porNombre = filterPayableMethods(methods, ['banco sol']);
   assert.deepEqual(porNombre.map((method) => method.code), ['CARD', 'SOL'], 'compara sin importar mayúsculas');
+});
+
+test('BANKS incluye los cinco bancos del formulario de billetera', () => {
+  assert.deepEqual(BANKS.map((bank) => bank.code), ['BCP', 'BNB', 'ECONOMICO', 'UNION', 'MERCANTIL']);
+  assert.equal(bankByCode('economico')?.name, 'Banco Económico');
+  assert.equal(isBankCode('SCOTIABANK'), false);
+});
+
+test('registerSchema y createWalletSchema validan banco y saldo inicial', () => {
+  const base = {
+    holder: 'Juan Pérez',
+    fullName: 'Juan Pérez',
+    email: 'juan@ejemplo.com',
+    password: 'Clave2026!',
+    bank: 'ECONOMICO',
+    initialBalance: 500,
+  };
+  const parseRegister = (payload) => registerSchema.safeParse({ body: payload, params: {}, query: {} });
+  const parseWallet = (payload) => createWalletSchema.safeParse({ body: payload, params: {}, query: {} });
+
+  assert.equal(parseRegister(base).success, true);
+  assert.equal(parseWallet(base).success, true);
+  assert.equal(parseRegister({ ...base, bank: 'SCOTIABANK' }).success, false);
+  assert.equal(parseWallet({ ...base, initialBalance: 0 }).success, false);
+  assert.equal(parseWallet({ ...base, email: 'correo-invalido' }).success, false);
+});
+
+test('depositSchema exige UUID y monto positivo', () => {
+  const id = '44444444-4444-4444-8444-444444444444';
+  const parse = (amount) => depositSchema.safeParse({
+    body: { amount }, params: { id }, query: {},
+  });
+  assert.equal(parse(100).success, true);
+  assert.equal(parse(0).success, false);
+  assert.equal(parse(-50).success, false);
+});
+
+test('los generadores de billetera producen datos ficticios con formato válido', () => {
+  assert.match(generateAccountNumber(), /^\d{16}$/);
+  assert.match(generateCardNumber(), /^4\d{15}$/);
+  assert.match(generateExpiry(new Date('2026-05-10T12:00:00Z')), /^12\/\d{2}$/);
+  assert.match(generateCvv(), /^\d{3}$/);
+
+  const keys = new Set(Array.from({ length: 200 }, () => generateCardNumber()));
+  assert.equal(keys.size, 200, 'los números de tarjeta no deben repetirse');
 });
