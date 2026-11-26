@@ -36,9 +36,15 @@ La migración inicial ejecuta `database/schema.sql`. El seeder crea:
 - Plataformas Xbox Series X|S y PC con 6 videojuegos y su inventario.
   PlayStation y Nintendo se eliminaron porque dejaron de entregar claves a
   tiendas virtuales externas (migración `remove-closed-platforms`).
-- Métodos de pago: **Tarjeta**, **Transferencia** y **Efectivo** (migración
-  `multi-payment-methods`). Las dos primeras descuentan saldo; Efectivo solo
-  deja constancia en el turno.
+- Métodos de pago: **Tarjeta** y los seis bancos bolivianos **Mercantil Santa
+  Cruz**, **BNB**, **Banco Unión**, **BCP**, **Banco Sol** y **Banco
+  Fortaleza** (migración `bolivian-banks`). Los siete descuentan saldo en la
+  misma transacción de la venta. **Efectivo** y la transferencia genérica
+  quedaron inactivos (migración `multi-payment-methods`).
+- `GET /payments/methods` devuelve **solo los medios con los que el usuario
+  puede pagar**: siempre Tarjeta y los bancos de sus cuentas (comprador) o de
+  los compradores que cobra (personal). El filtro vive en
+  `utils/paymentMethods.js` (`filterPayableMethods`).
 - Una **tarjeta ficticia BCP** y una **cuenta bancaria BCP** por comprador
   (500 USD iniciales cada una) en `payment_cards` y `bank_accounts`. El personal
   no tiene cuenta propia: selecciona la del comprador que atiende.

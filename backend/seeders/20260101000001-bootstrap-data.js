@@ -137,12 +137,17 @@ const games = [
   { id: '88888888-8888-4888-8888-888888888826', inventoryId: '99999999-9999-4999-8999-999999999926', title: 'Battlefield 6', sku: 'PC-BF6-026', price: 60, platform: 'PC', category: 'Acción', genre: 'Shooter', ageRating: 'M', stock: 11, minQuantity: 7, itemType: 'digital_key', description: 'Guerras a gran escala con combate combinado.' },
 ];
 
-// Medios de pago de la demo: Tarjeta y Transferencia descuentan de una cuenta
-// ficticia con saldo; Efectivo se registra en caja sin cuenta bancaria.
+// Medios de pago de la demo: Tarjeta y los seis bancos bolivianos descuentan
+// de una cuenta ficticia con saldo. Efectivo y la Transferencia genérica fueron
+// retirados por la migración `bolivian-banks` y ya no se insertan.
 const paymentMethods = [
-  { id: '77777777-7777-4777-8777-777777777771', code: 'CASH', name: 'Efectivo' },
   { id: '77777777-7777-4777-8777-777777777772', code: 'CARD', name: 'Tarjeta' },
-  { id: '77777777-7777-4777-8777-777777777773', code: 'TRANSFER', name: 'Transferencia' },
+  { id: '77777777-7777-4777-8777-777777777774', code: 'MERCANTIL', name: 'Mercantil Santa Cruz' },
+  { id: '77777777-7777-4777-8777-777777777775', code: 'BNB', name: 'BNB' },
+  { id: '77777777-7777-4777-8777-777777777776', code: 'UNION', name: 'Banco Unión' },
+  { id: '77777777-7777-4777-8777-777777777777', code: 'BCP', name: 'BCP' },
+  { id: '77777777-7777-4777-8777-777777777778', code: 'SOL', name: 'Banco Sol' },
+  { id: '77777777-7777-4777-8777-777777777779', code: 'FORTALEZA', name: 'Banco Fortaleza' },
 ];
 
 // Tarjetas ficticias BCP: solo las cuentas de comprador tienen tarjeta
@@ -156,9 +161,9 @@ const paymentCards = [
 ];
 const CARD_BALANCE = 500;
 
-// Cuentas bancarias ficticias para Transferencia: una por comprador, también
-// con 500 USD iniciales. Los números son inventados (no corresponden a una
-// cuenta real) y solo se muestran enmascarados en el POS.
+// Cuentas bancarias ficticias para pagar desde los bancos del POS: una por
+// comprador, también con 500 USD iniciales. Los números son inventados (no
+// corresponden a una cuenta real) y solo se muestran enmascarados en el POS.
 const bankAccounts = [
   { id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee5', user_id: '22222222-2222-4222-8222-222222222225', account_number: '19330001234562770', holder: 'Comprador Uno' },
   { id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee6', user_id: '22222222-2222-4222-8222-222222222226', account_number: '19330001234566178', holder: 'Comprador Dos' },

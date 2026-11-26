@@ -8,6 +8,7 @@ const { generateDigitalKey, DIGITAL_KEY_PATTERN } = require('../src/utils/digita
 const ApiError = require('../src/utils/ApiError');
 const { createSaleSchema, movementSchema, createGameSchema } = require('../src/validators/schemas');
 const { signedQuantity } = require('../src/utils/stock');
+const { filterPayableMethods } = require('../src/utils/paymentMethods');
 
 test('roundMoney redondea a dos decimales', () => {
   assert.equal(roundMoney(10.005), 10.01);
@@ -40,7 +41,7 @@ test('createSaleSchema exige al menos un item y un pago', () => {
   assert.equal(createSaleSchema.safeParse(valid).success, true);
 });
 
-test('createSaleSchema acepta cuenta bancaria para Transferencia', () => {
+test('createSaleSchema acepta tarjeta o cuenta bancaria para los pagos', () => {
   const id = '33333333-3333-4333-8333-333333333333';
   const parse = (payment) => createSaleSchema.safeParse({
     body: {
@@ -99,4 +100,21 @@ test('signedQuantity: la entrada suma y la salida resta', () => {
   assert.equal(signedQuantity('exit', 3), -3);
   assert.equal(signedQuantity('exit', -2), -2, 'la salida siempre resta');
   assert.equal(signedQuantity('adjustment', -5), -5, 'el ajuste respeta el signo');
+});
+
+test('filterPayableMethods deja Tarjeta y solo los bancos con cuenta propia', () => {
+  const methods = [
+    { code: 'CARD', name: 'Tarjeta' },
+    { code: 'BCP', name: 'Banco de Crédito de Bolivia' },
+    { code: 'SOL', name: 'Banco Sol' },
+    { code: 'BNB', name: 'Banco Nacional de Bolivia' },
+  ];
+  const bcpOnly = filterPayableMethods(methods, ['BCP']);
+  assert.deepEqual(bcpOnly.map((method) => method.code), ['CARD', 'BCP']);
+
+  const sinCuentas = filterPayableMethods(methods, []);
+  assert.deepEqual(sinCuentas.map((method) => method.code), ['CARD'], 'sin cuentas solo queda Tarjeta');
+
+  const porNombre = filterPayableMethods(methods, ['banco sol']);
+  assert.deepEqual(porNombre.map((method) => method.code), ['CARD', 'SOL'], 'compara sin importar mayúsculas');
 });

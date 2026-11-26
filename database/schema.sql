@@ -168,8 +168,8 @@ CREATE TABLE IF NOT EXISTS payment_cards (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Cuenta bancaria ficticia (demo) para pagar por Transferencia: una por
--- comprador, con saldo propio en dólares. Los pagos se registran con una
+-- Cuenta bancaria ficticia (demo) para pagar desde los bancos del POS: una
+-- por comprador, con saldo propio en dólares. Los pagos se registran con una
 -- referencia de operación inventada.
 CREATE TABLE IF NOT EXISTS bank_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

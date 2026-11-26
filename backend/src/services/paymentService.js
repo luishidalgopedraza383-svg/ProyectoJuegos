@@ -1,11 +1,7 @@
 'use strict';
 
 const db = require('../models');
-
-const listMethods = () => db.PaymentMethod.findAll({
-  where: { isActive: true },
-  order: [['name', 'ASC']],
-});
+const { filterPayableMethods } = require('../utils/paymentMethods');
 
 // Tarjetas de los compradores: solo las ve el personal del punto de venta,
 // para poder cobrar en el POS con la tarjeta del comprador atendido.
@@ -49,7 +45,7 @@ const getMyCard = async (userId) => {
   };
 };
 
-// Cuentas bancarias de los compradores para cobrar por Transferencia.
+// Cuentas bancarias de los compradores para cobrar desde los bancos del POS.
 const listBuyerAccounts = async () => {
   const accounts = await db.BankAccount.findAll({
     where: { isActive: true },
@@ -73,7 +69,7 @@ const listBuyerAccounts = async () => {
   }));
 };
 
-// Cuenta bancaria ficticia del usuario autenticado (Transferencia).
+// Cuenta bancaria ficticia del usuario autenticado (pago desde un banco).
 const getMyAccount = async (userId) => {
   const account = await db.BankAccount.findOne({ where: { userId, isActive: true } });
   if (!account) return null;
@@ -85,6 +81,21 @@ const getMyAccount = async (userId) => {
     holder: account.holder,
     balance: account.balance,
   };
+};
+
+// Medios de pago disponibles para el usuario en el POS: siempre Tarjeta y,
+// de los bancos, solo los que coinciden con las cuentas desde las que se
+// puede debitar (la propia del comprador o las de los compradores que cobra
+// el personal). Así nadie ve un banco desde el que no se pueda pagar.
+const listMethods = async (user) => {
+  const isBuyer = user?.role?.name === 'comprador';
+  const ownAccount = isBuyer ? await getMyAccount(user.id) : null;
+  const accounts = isBuyer ? (ownAccount ? [ownAccount] : []) : await listBuyerAccounts();
+  const methods = await db.PaymentMethod.findAll({
+    where: { isActive: true },
+    order: [['name', 'ASC']],
+  });
+  return filterPayableMethods(methods, accounts.map((account) => account.bank));
 };
 
 module.exports = { listMethods, getMyCard, listBuyerCards, listBuyerAccounts, getMyAccount };

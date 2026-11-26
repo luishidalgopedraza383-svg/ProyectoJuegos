@@ -291,21 +291,26 @@ que ya aparezca en una venta anterior (inactivo y sin stock, solo para historial
 
 ## Medios de pago (demo)
 
-- El POS ofrece tres medios: **Tarjeta**, **Transferencia** y **Efectivo**
-  (migración `multi-payment-methods`).
+- El POS ofrece siete medios: **Tarjeta** y los seis bancos bolivianos
+  **Mercantil Santa Cruz**, **BNB**, **Banco Unión**, **BCP**, **Banco Sol** y
+  **Banco Fortaleza** (migración `bolivian-banks`). **Efectivo** y la
+  transferencia genérica fueron retirados: quedan inactivos por si una venta
+  antigua los usó.
+- Cada usuario solo ve **el banco de sus propias cuentas**: el comprador ve
+  Tarjeta y su banco; el cajero ve Tarjeta y los bancos de los compradores que
+  cobra (`GET /payments/methods` filtra según el usuario).
 - Solo los **compradores** tienen cuentas ficticias individuales: una tarjeta
   BCP y una cuenta bancaria BCP, cada una con **500 USD iniciales**. El personal
   de caja no tiene cuenta propia: cobra con la cuenta del comprador que atiende.
-- Al elegir **Tarjeta** o **Transferencia**, el POS muestra la cuenta del
-  comprador elegido (o la tuya, si eres comprador): banco, número enmascarado,
-  titular y **saldo disponible**. **Efectivo** se registra en el turno sin
-  descontar de ninguna cuenta.
+- Al elegir **Tarjeta** o cualquiera de los **bancos**, el POS muestra la cuenta
+  del comprador elegido (o la tuya, si eres comprador): banco, número
+  enmascarado, titular y **saldo disponible**. El banco elegido no necesita
+  coincidir con el de la cuenta: es una demo y lo que importa es el saldo.
 - El saldo se debita en la misma transacción de la venta (junto con el stock y
   las claves): si algo falla, no se guarda nada. Un pago con saldo insuficiente
   se rechaza.
 - El pago queda registrado en `payments` con una referencia enmascarada:
-  `BCP ****1234` para tarjeta, `BCP ****1234 · OP-XXXX` para transferencia y
-  `Efectivo en caja` para efectivo.
+  `BCP ****1234` para tarjeta y `BCP ****1234 · OP-XXXX` para los bancos.
 
 ## Carrito de compras y compra directa
 
@@ -382,9 +387,9 @@ Quedan a medias / para más adelante, a propósito, para no bloquear el proyecto
 
 - **Supabase Auth**: integración externa. El login actual es propio (JWT + scrypt).
   Archivo `frontend/src/services/supabase.js` marcado como pendiente.
-- **Pagos en línea / pasarela**: hoy solo cobro simulado con **Tarjeta**,
-  **Transferencia** y **Efectivo** desde saldos ficticios en PostgreSQL; no hay
-  Stripe, PayPal ni pasarela real.
+- **Pagos en línea / pasarela**: hoy solo cobro simulado con **Tarjeta** y
+  **bancos bolivianos** desde saldos ficticios en PostgreSQL; no hay Stripe,
+  PayPal ni pasarela real.
 - **HTTPS con certificado**: HSTS ya está configurado en Nginx; falta emitir el
   certificado (Let's Encrypt / ALB) y apuntar el dominio.
 - **Correos y notificaciones** y recuperación de contraseña por correo.

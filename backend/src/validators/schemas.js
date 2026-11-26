@@ -61,7 +61,7 @@ const createSaleSchema = z.object({
       paymentMethodId: uuid,
       amount: nonNegativeNumber.refine((value) => value > 0, 'El monto debe ser mayor a cero'),
       reference: z.string().max(120).optional(),
-      // Obligatorios cuando el método es Tarjeta o Transferencia (saleService).
+      // Obligatorios cuando el método es Tarjeta o uno de los bancos (saleService).
       cardId: uuid.optional(),
       bankAccountId: uuid.optional(),
     })).min(1),

@@ -20,6 +20,12 @@ const generateSaleCode = () => {
   return `GH-${stamp}-${random}`;
 };
 
+// Medios de pago que debitan una cuenta bancaria del comprador: los seis
+// bancos bolivianos del POS. No se exige que la cuenta pertenezca al banco
+// elegido (es una demo: lo que importa es que la cuenta tenga saldo).
+const BANK_METHOD_CODES = ['MERCANTIL', 'BNB', 'UNION', 'BCP', 'SOL', 'FORTALEZA'];
+const isBankMethod = (code) => BANK_METHOD_CODES.includes(code);
+
 // Una clave distinta por cada unidad vendida, canjeable en la plataforma.
 // Se valida contra las claves ya entregadas para no repetir ninguna.
 const generateDigitalKeys = async (quantity, transaction) => {
@@ -131,8 +137,8 @@ const createSale = async (payload, user) => {
       throw ApiError.badRequest('Uno o más métodos de pago no son válidos');
     }
 
-    // Tarjeta y Transferencia descuentan de una cuenta ficticia dentro de la
-    // misma transacción de la venta; Efectivo solo deja constancia en caja.
+    // Tarjeta y los bancos descuentan de una cuenta ficticia dentro de la
+    // misma transacción de la venta: si el saldo no alcanza, no se guarda nada.
     const paymentRows = [];
     for (const payment of payload.payments) {
       const method = methods.find((item) => item.id === payment.paymentMethodId);
@@ -171,8 +177,10 @@ const createSale = async (payload, user) => {
         }
         await card.decrement('balance', { by: amount, transaction });
         row.reference = `${card.brand} ****${card.cardNumber.slice(-4)}`;
-      } else if (method.code === 'TRANSFER') {
-        if (!bankAccountId) throw ApiError.badRequest('Para pagar con Transferencia debes indicar la cuenta bancaria');
+      } else if (isBankMethod(method.code)) {
+        if (!bankAccountId) {
+          throw ApiError.badRequest(`Para pagar con ${method.name} debes indicar la cuenta bancaria`);
+        }
         const account = await db.BankAccount.findByPk(bankAccountId, {
           transaction,
           lock: Transaction.LOCK.UPDATE,
@@ -198,8 +206,9 @@ const createSale = async (payload, user) => {
         await account.decrement('balance', { by: amount, transaction });
         // Operación ficticia: deja una referencia distinta en cada venta.
         row.reference = `${account.bank} ****${account.accountNumber.slice(-4)} · OP-${generateSaleCode().slice(3)}`;
-      } else if (method.code === 'CASH') {
-        row.reference = payment.reference || 'Efectivo en caja';
+      } else {
+        // Nunca debería llegar: el POS solo ofrece Tarjeta y los seis bancos.
+        throw ApiError.badRequest(`Método de pago no soportado: ${method.name}`);
       }
 
       paymentRows.push(row);

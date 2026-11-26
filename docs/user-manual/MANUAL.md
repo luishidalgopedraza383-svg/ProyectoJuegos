@@ -33,15 +33,17 @@ Muestra ingresos, ventas, juegos activos, clientes y alertas de stock bajo. Se a
 
 1. **Abrir turno** si no hay uno activo (en la compra directa se abre solo).
 2. Haz clic en los juegos para agregarlos al carrito.
-3. Elige el medio de pago: **Tarjeta**, **Transferencia** o **Efectivo**.
-   - Con **Tarjeta** o **Transferencia** se muestra la cuenta ficticia del
+3. Elige el medio de pago: **Tarjeta** o **el banco de tu cuenta** (en la demo,
+   **BCP** para todos los compradores). Solo aparecen Tarjeta y los bancos de
+   las cuentas con las que puedes pagar.
+   - Con **Tarjeta** o un **banco** se muestra la cuenta ficticia del
      comprador (la tuya si eres comprador): banco, número enmascarado, titular
      y saldo disponible. Cada comprador tiene su propia tarjeta y su propia
      cuenta bancaria, ambas con 500 USD.
-   - Con **Efectivo** solo se registra el pago en el turno; no se descuenta de
-     ninguna cuenta.
+   - El banco elegido no necesita coincidir con el de la cuenta: en la demo lo
+     que importa es que la cuenta tenga saldo.
 4. Presiona **Cobrar**: el stock baja, el saldo de la cuenta elegida se debita
-   (si es Tarjeta o Transferencia) y aparecen las **claves digitales**.
+   y aparecen las **claves digitales**.
 5. Al finalizar, **Cerrar turno**; el sistema calcula el valor esperado y la diferencia.
 
 ## Comprar desde la tienda
@@ -54,11 +56,11 @@ Muestra ingresos, ventas, juegos activos, clientes y alertas de stock bajo. Se a
    juego y con **Vaciar carrito** lo dejas en cero.
 3. Pulsa **Ir a pagar**: llegas al punto de venta con **todo el carrito
    precargado** y, si no hay turno, se abre solo.
-4. Elige **Tarjeta**, **Transferencia** o **Efectivo**. Con Tarjeta o
-   Transferencia se muestra **tu cuenta ficticia** (número enmascarado y saldo
-   disponible); con Efectivo no se descuenta saldo.
-5. Pulsa **Cobrar**: el stock baja, el saldo de la cuenta elegida se debita (si
-   corresponde) y aparecen las **claves digitales** de cada juego comprado. Si
+4. Elige **Tarjeta** o **el banco de tu cuenta** (BCP en la demo). En ambos
+   casos se muestra **tu cuenta ficticia** (número enmascarado y saldo
+   disponible) y el saldo se descuenta al cobrar.
+5. Pulsa **Cobrar**: el stock baja, el saldo de la cuenta elegida se debita y
+   aparecen las **claves digitales** de cada juego comprado. Si
    el cobro falla (por ejemplo, saldo insuficiente), el carrito se restaura
    como estaba.
 

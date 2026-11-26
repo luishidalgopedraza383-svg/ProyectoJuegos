@@ -2,7 +2,7 @@
 
 const { DataTypes } = require('sequelize');
 
-// Cuenta bancaria ficticia (demo) usada por el medio de pago Transferencia.
+// Cuenta bancaria ficticia (demo) usada por los medios de pago de banco.
 // Igual que la tarjeta, se debita dentro de la transacción de la venta.
 module.exports = (sequelize) =>
   sequelize.define('BankAccount', {

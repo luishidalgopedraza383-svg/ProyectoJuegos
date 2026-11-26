@@ -4,8 +4,10 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const paymentService = require('../services/paymentService');
 
-const listMethods = asyncHandler(async (_req, res) => {
-  res.json({ items: await paymentService.listMethods() });
+// Los medios se filtran por el usuario: cada quien solo ve los bancos desde
+// los que puede debitar (ver paymentService.listMethods).
+const listMethods = asyncHandler(async (req, res) => {
+  res.json({ items: await paymentService.listMethods(req.user) });
 });
 
 const myCard = asyncHandler(async (req, res) => {

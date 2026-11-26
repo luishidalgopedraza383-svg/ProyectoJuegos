@@ -60,8 +60,8 @@ export default function PosPage() {
     reload().catch(() => {});
     api('/payments/methods').then((data) => {
       setMethods(data.items);
-      // Tarjeta queda preseleccionada, pero se puede cambiar a Efectivo o
-      // Transferencia desde el selector del POS.
+      // Tarjeta queda preseleccionada, pero se puede cambiar a los bancos
+      // que el backend ofrece (Tarjeta más el banco de sus cuentas).
       const cardMethod = data.items.find((method) => method.code === 'CARD');
       if (cardMethod) setMethodId((current) => current || cardMethod.id);
     }).catch(() => {});
@@ -121,7 +121,9 @@ export default function PosPage() {
 
   const selectedMethod = methods.find((method) => method.id === methodId);
   const needsCard = selectedMethod?.code === 'CARD';
-  const needsAccount = selectedMethod?.code === 'TRANSFER';
+  // Todo lo que no sea Tarjeta debita una cuenta bancaria: los métodos que
+  // llegan ya vienen filtrados (Tarjeta más los bancos con cuenta posible).
+  const needsAccount = Boolean(selectedMethod) && !needsCard;
   const account = accounts.find((item) => item.id === accountId) || null;
 
   const pay = async () => {
@@ -138,7 +140,7 @@ export default function PosPage() {
     }
     if (needsAccount && !account) {
       setError(isBuyer
-        ? 'No tienes una cuenta bancaria registrada para pagar con Transferencia.'
+        ? `No tienes una cuenta bancaria registrada para pagar con ${selectedMethod?.name ?? 'este medio'}.`
         : 'Selecciona la cuenta bancaria del comprador con la que vas a cobrar.');
       return;
     }
@@ -164,10 +166,7 @@ export default function PosPage() {
         code: sale.code,
         keys: (sale.details || []).flatMap((detail) => detail.digitalKeys || []),
       });
-      const detail = needsCard || needsAccount
-        ? 'Stock y saldo actualizados.'
-        : 'Pago en efectivo registrado en el turno.';
-      setMessage(`Compra ${sale.code} registrada por ${sale.total}. ${detail}`);
+      setMessage(`Compra ${sale.code} registrada por ${sale.total}. Stock y saldo actualizados.`);
       // La compra ya se atendió: se limpian los parámetros para no repetirla.
       setSearchParams({}, { replace: true });
       await reload();
@@ -299,10 +298,6 @@ export default function PosPage() {
           <button className="btn" onClick={pay}>Cobrar</button>
         </div>
 
-        {selectedMethod?.code === 'CASH' && (
-          <p className="muted">Pago simulado en efectivo: no se descuenta de ninguna cuenta bancaria.</p>
-        )}
-
         {needsCard && (
           <div className="card-slot">
             <label>
@@ -362,9 +357,9 @@ export default function PosPage() {
                 ))}
               </select>
             </label>
-            {!isBuyer && (
-              <p className="muted">La transferencia se descuenta de la cuenta individual del comprador elegido.</p>
-            )}
+            <p className="muted">
+              {`${!isBuyer ? 'El cobro se descuenta de la cuenta individual del comprador elegido. ' : ''}El banco del método no necesita coincidir con el de la cuenta (demo).`}
+            </p>
             {account ? (
               <div className="payment-card">
                 <div className="payment-card__head">
@@ -383,7 +378,7 @@ export default function PosPage() {
             ) : (
               <p className="muted">
                 {isBuyer
-                  ? 'No tienes una cuenta bancaria registrada para pagar con Transferencia.'
+                  ? `No tienes una cuenta bancaria registrada para pagar con ${selectedMethod?.name ?? 'este medio'}.`
                   : 'No hay cuentas bancarias de compradores registradas.'}
               </p>
             )}
